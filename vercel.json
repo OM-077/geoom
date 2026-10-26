@@ -1,0 +1,8 @@
+{
+  "crons": [
+    { "path": "/api/email/monday", "schedule": "0 7 * * 1" },
+    { "path": "/api/cron/weekly", "schedule": "0 2 * * 0" },
+    { "path": "/api/cron/pipelines", "schedule": "0 */6 * * *" },
+    { "path": "/api/cron/ping", "schedule": "0 0 */2 * *" }
+  ]
+}
