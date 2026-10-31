@@ -40,7 +40,7 @@ export const GUIDED_PLATFORMS: GuidedFixPlatform[] = [
     points: 12,
     editUrl: 'https://business.foursquare.com',
     claimUrl: 'https://business.foursquare.com/claim',
-    impact: 'ChatGPT pulls 70% of local business data from Foursquare. This is the single highest-impact fix after GBP.',
+    impact: 'ChatGPT uses Foursquare data for local business recommendations. This is the single highest-impact fix after GBP.',
     steps: [
       'Copy your business name, address, and phone using the COPY buttons above',
       'Click JUMP TO FOURSQUARE — create account if needed (free)',
