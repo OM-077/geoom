@@ -1,17 +1,16 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
-import { supabaseAdmin } from './supabase'
-import { scoreToMarketShare, getTradeLabel } from './utils'
-import { safeParseJSON } from './llm-failover'
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-
 // ============================================
 // COMPETITOR TRACKER
-// Weekly Gemini web analysis of competitor
+// Weekly analysis of competitor AI visibility
+// Uses callAI() from ai-router — free rotation, never breaks
 // Shows contractor exactly who is beating them
 // And exactly what that competitor is doing right
 // Emotional driver — nobody wants to lose
 // ============================================
+
+import { supabaseAdmin } from './supabase'
+import { scoreToMarketShare, getTradeLabel } from './utils'
+import { safeParseJSON } from './llm-failover'
+import { callAI } from './copilot/ai-router'
 
 export async function runCompetitorAnalysis(params: {
   businessId: string
@@ -30,11 +29,6 @@ export async function runCompetitorAnalysis(params: {
   competitorPageCount: number
 }> {
   const tradeLabel = getTradeLabel(params.trade)
-
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
-    generationConfig: { temperature: 0.2, maxOutputTokens: 1500 }
-  })
 
   const prompt = `Research this ${tradeLabel} business in ${params.city}, ${params.state}: "${params.competitorName}"
 
@@ -79,9 +73,14 @@ Return ONLY valid JSON:
   let parsed = fallback
 
   try {
-    const result = await model.generateContent(prompt)
-    const response = result.response.text()
-    parsed = safeParseJSON(response, fallback)
+    const result = await callAI(prompt, {
+      maxTokens: 1500,
+      temperature: 0.2,
+      fallback: JSON.stringify(fallback)
+    })
+    if (result) {
+      parsed = safeParseJSON(result, fallback)
+    }
   } catch (err) {
     console.error('Competitor analysis error:', err)
   }
