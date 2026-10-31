@@ -1,181 +1,280 @@
+// ============================================
+// NAP SCANNER
+// Checks Name, Address, Phone consistency across 8 platforms
+// Pure code — no AI needed for this
+// Platform weights based on AI data source importance
+// ============================================
+
 import { supabaseAdmin } from './supabase'
 
-// ============================================
-// NAP SCANNER — NAME ADDRESS PHONE
-// Checks 8 platforms for consistency
-// Foursquare = 70% of ChatGPT local data
-// Inconsistent NAP = AI does not trust you
-// Every fixed platform = higher AI citations
-// ============================================
-
-const PLATFORM_WEIGHTS: Record<string, number> = {
-  google: 15,    // Highest — GBP is everything
-  foursquare: 12, // ChatGPT pulls 70% of data here
-  yelp: 10,      // Perplexity primary source
-  bing: 8,       // Microsoft Bing Chat / Copilot
-  apple: 8,      // Apple Maps / Siri
-  bbb: 6,        // Trust signal for AI
-  angi: 5,       // Home service specific
-  homeadvisor: 5 // Home service specific
-}
-
-export interface PlatformStatus {
-  status: 'consistent' | 'mismatch' | 'missing' | 'unknown'
-  points: number
-  manually_verified?: boolean
-  verified_at?: string
-}
-
-export async function runNAPScan(params: {
-  businessId: string
+export interface NAPData {
   businessName: string
-  trade: string
+  address: string
   city: string
   state: string
+  zip: string
   phone: string
-  address: string
   website: string
-}): Promise<{
-  overallScore: number
-  platforms: Record<string, PlatformStatus>
+}
+
+export interface PlatformResult {
+  key: string
+  label: string
+  listed: boolean
+  napConsistent: boolean
   issues: string[]
-  priorityFixes: Array<{ platform: string; points: number; impact: string }>
-}> {
+  score: number
+  maxScore: number
+  impact: string
+  editUrl: string
+  claimUrl: string
+}
 
-  // Get existing scan to preserve manually verified platforms
-  const { data: existingScan } = await supabaseAdmin
-    .from('nap_scans')
-    .select('platforms_status')
-    .eq('business_id', params.businessId)
-    .single()
+export interface NAPScanResult {
+  platforms: PlatformResult[]
+  totalScore: number
+  maxScore: number
+  consistencyPercent: number
+  topIssues: string[]
+}
 
-  const existingStatus = (existingScan?.platforms_status || {}) as Record<string, PlatformStatus>
+// Platform weights — higher = more AI data source importance
+export const PLATFORM_WEIGHTS: Record<string, number> = {
+  google: 6,
+  foursquare: 4,
+  yelp: 3,
+  bing: 2,
+  apple: 2,
+  bbb: 1,
+  angi: 1,
+  homeadvisor: 1
+}
 
-  // Build platform status
-  // Start with existing verified platforms
-  // Unverified platforms start as 'unknown'
-  const platforms: Record<string, PlatformStatus> = {}
-
-  for (const [platform, weight] of Object.entries(PLATFORM_WEIGHTS)) {
-    const existing = existingStatus[platform]
-
-    if (existing?.manually_verified) {
-      // Keep manually verified platforms
-      platforms[platform] = existing
-    } else {
-      // Unknown until contractor checks via Copilot HUD
-      platforms[platform] = {
-        status: 'unknown',
-        points: weight
-      }
-    }
-  }
-
-  // Calculate score from verified platforms only
-  let score = 0
-  const issues: string[] = []
-  const priorityFixes: Array<{ platform: string; points: number; impact: string }> = []
-
-  for (const [platform, status] of Object.entries(platforms)) {
-    if (status.status === 'consistent' && status.manually_verified) {
-      score += PLATFORM_WEIGHTS[platform]
-    } else if (status.status !== 'consistent') {
-      const platformName = platform.charAt(0).toUpperCase() + platform.slice(1)
-      const weight = PLATFORM_WEIGHTS[platform]
-
-      const impacts: Record<string, string> = {
-        google: 'ChatGPT and all AI engines verify GBP first',
-        foursquare: 'ChatGPT pulls 70% of local business data from Foursquare',
-        yelp: 'Perplexity uses Yelp as primary local data source',
-        bing: 'Microsoft Copilot reads Bing Places directly',
-        apple: 'Siri and Apple Maps citations come from here',
-        bbb: 'AI engines use BBB as trust verification signal',
-        angi: 'Angi is a top cited source for home service AI recommendations',
-        homeadvisor: 'HomeAdvisor data feeds multiple AI recommendation engines'
-      }
-
-      issues.push(`${platformName}: Not yet verified`)
-      priorityFixes.push({
-        platform: platformName,
-        points: weight,
-        impact: impacts[platform] || `Important citation source for AI engines`
-      })
-    }
-  }
-
-  // Sort priority fixes by impact (points)
-  priorityFixes.sort((a, b) => b.points - a.points)
-
-  // Update database
-  await supabaseAdmin
-    .from('nap_scans')
-    .upsert({
-      business_id: params.businessId,
-      nap_score: Math.min(score, 100),
-      platforms_status: platforms,
-      issues_found: issues.length,
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'business_id' })
-
-  return {
-    overallScore: Math.min(score, 100),
-    platforms,
-    issues,
-    priorityFixes
+export const PLATFORM_META: Record<string, {
+  label: string
+  impact: string
+  editUrl: string
+  claimUrl: string
+}> = {
+  google: {
+    label: 'Google Business Profile',
+    impact: 'ChatGPT, Gemini, and all AI engines verify GBP data first. Most important fix.',
+    editUrl: 'https://business.google.com/dashboard',
+    claimUrl: 'https://business.google.com/create'
+  },
+  foursquare: {
+    label: 'Foursquare',
+    impact: 'ChatGPT uses Foursquare data for local business recommendations. Highest-impact fix after GBP.',
+    editUrl: 'https://business.foursquare.com',
+    claimUrl: 'https://business.foursquare.com/claim'
+  },
+  yelp: {
+    label: 'Yelp',
+    impact: 'Perplexity uses Yelp as its primary local data source. Consistent Yelp data = more AI citations.',
+    editUrl: 'https://biz.yelp.com/login',
+    claimUrl: 'https://biz.yelp.com/claim'
+  },
+  bing: {
+    label: 'Bing Places',
+    impact: 'Microsoft Copilot reads Bing Places directly. Essential for Windows and Edge users.',
+    editUrl: 'https://www.bingplaces.com',
+    claimUrl: 'https://www.bingplaces.com'
+  },
+  apple: {
+    label: 'Apple Business Connect',
+    impact: 'Siri, Apple Maps, and iOS Spotlight recommendations come from Apple Business Connect.',
+    editUrl: 'https://businessconnect.apple.com',
+    claimUrl: 'https://businessconnect.apple.com/claim'
+  },
+  bbb: {
+    label: 'Better Business Bureau',
+    impact: 'AI engines use BBB as a trust verification signal — being listed confirms legitimacy.',
+    editUrl: 'https://www.bbb.org/business-login',
+    claimUrl: 'https://www.bbb.org/request-a-business-profile'
+  },
+  angi: {
+    label: 'Angi',
+    impact: 'Angi is a top-cited source for home service AI recommendations. Critical for HVAC, plumbing, electrical.',
+    editUrl: 'https://pro.angi.com',
+    claimUrl: 'https://pro.angi.com/signup'
+  },
+  homeadvisor: {
+    label: 'HomeAdvisor',
+    impact: 'HomeAdvisor data feeds multiple AI recommendation engines for home services.',
+    editUrl: 'https://pro.homeadvisor.com',
+    claimUrl: 'https://pro.homeadvisor.com/account/login'
   }
 }
 
-export async function markPlatformFixed(params: {
-  businessId: string
-  platform: string
-}): Promise<{ success: boolean; pointsGained: number; newScore: number }> {
-  try {
-    const { data: scan } = await supabaseAdmin
-      .from('nap_scans')
-      .select('platforms_status, nap_score')
-      .eq('business_id', params.businessId)
-      .single()
+// Normalize a string for comparison: lowercase, strip punctuation, collapse spaces
+function normalize(str: string): string {
+  return str
+    .toLowerCase()
+    .replace(/[^\w\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
 
-    if (!scan) return { success: false, pointsGained: 0, newScore: 0 }
+// Phone normalization: digits only
+function normalizePhone(phone: string): string {
+  return phone.replace(/\D/g, '')
+}
 
-    const platforms = (scan.platforms_status || {}) as Record<string, PlatformStatus>
-    const platform = params.platform.toLowerCase()
+// Check if two NAP strings are consistent (fuzzy match)
+function isConsistent(a: string, b: string): boolean {
+  if (!a || !b) return false
+  const na = normalize(a)
+  const nb = normalize(b)
+  if (na === nb) return true
+  // Allow one to be a subset of the other (e.g. "LLC" suffix differences)
+  return na.includes(nb) || nb.includes(na)
+}
 
-    const wasFixed = platforms[platform]?.status === 'consistent'
-    const pointsForPlatform = PLATFORM_WEIGHTS[platform] || 5
+// Simulate platform check from stored scan data
+// In production: replace each with a real API call or scrape result
+function checkPlatformConsistency(
+  platformData: Record<string, unknown> | null,
+  masterNAP: NAPData,
+  platformKey: string
+): { listed: boolean; napConsistent: boolean; issues: string[] } {
+  if (!platformData) {
+    return { listed: false, napConsistent: false, issues: [`Not listed on ${PLATFORM_META[platformKey]?.label}`] }
+  }
 
-    platforms[platform] = {
-      status: 'consistent',
-      points: pointsForPlatform,
-      manually_verified: true,
-      verified_at: new Date().toISOString()
+  const listed = !!(platformData[`${platformKey}_listed`])
+  if (!listed) {
+    return { listed: false, napConsistent: false, issues: [`Not listed on ${PLATFORM_META[platformKey]?.label}`] }
+  }
+
+  const issues: string[] = []
+  let consistent = true
+
+  const storedName = (platformData[`${platformKey}_name`] as string) || ''
+  const storedPhone = (platformData[`${platformKey}_phone`] as string) || ''
+  const storedAddress = (platformData[`${platformKey}_address`] as string) || ''
+
+  if (storedName && !isConsistent(storedName, masterNAP.businessName)) {
+    issues.push(`Name mismatch: "${storedName}" vs "${masterNAP.businessName}"`)
+    consistent = false
+  }
+
+  if (storedPhone) {
+    const normStored = normalizePhone(storedPhone)
+    const normMaster = normalizePhone(masterNAP.phone)
+    if (normStored !== normMaster && normStored.length > 0 && normMaster.length > 0) {
+      issues.push(`Phone mismatch: ${storedPhone} vs ${masterNAP.phone}`)
+      consistent = false
+    }
+  }
+
+  if (storedAddress && !isConsistent(storedAddress, `${masterNAP.address} ${masterNAP.city} ${masterNAP.state}`)) {
+    issues.push(`Address mismatch on ${PLATFORM_META[platformKey]?.label}`)
+    consistent = false
+  }
+
+  return { listed: true, napConsistent: consistent, issues }
+}
+
+export async function runNAPScan(businessId: string): Promise<NAPScanResult> {
+  const { data: business } = await supabaseAdmin
+    .from('businesses')
+    .select('*')
+    .eq('id', businessId)
+    .single()
+
+  if (!business) throw new Error('Business not found')
+
+  // Get latest stored NAP scan data
+  const { data: scanData } = await supabaseAdmin
+    .from('nap_scans')
+    .select('*')
+    .eq('business_id', businessId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  const latestScan = scanData as Record<string, unknown> | null
+
+  const masterNAP: NAPData = {
+    businessName: business.business_name,
+    address: business.address || '',
+    city: business.city,
+    state: business.state,
+    zip: business.zip || '',
+    phone: business.phone || '',
+    website: business.website || ''
+  }
+
+  const platforms: PlatformResult[] = []
+  let totalScore = 0
+  const allIssues: string[] = []
+
+  for (const [key, maxScore] of Object.entries(PLATFORM_WEIGHTS)) {
+    const meta = PLATFORM_META[key]
+    const check = checkPlatformConsistency(latestScan, masterNAP, key)
+
+    let score = 0
+    if (check.listed && check.napConsistent) {
+      score = maxScore
+    } else if (check.listed && !check.napConsistent) {
+      score = Math.floor(maxScore * 0.5)
     }
 
-    // Recalculate score
-    let newScore = 0
-    for (const [p, status] of Object.entries(platforms)) {
-      if (status.status === 'consistent') {
-        newScore += PLATFORM_WEIGHTS[p] || 0
-      }
-    }
-    newScore = Math.min(newScore, 100)
+    totalScore += score
+    allIssues.push(...check.issues)
 
-    await supabaseAdmin
-      .from('nap_scans')
-      .update({
-        platforms_status: platforms,
-        nap_score: newScore,
-        updated_at: new Date().toISOString()
-      })
-      .eq('business_id', params.businessId)
+    platforms.push({
+      key,
+      label: meta.label,
+      listed: check.listed,
+      napConsistent: check.napConsistent,
+      issues: check.issues,
+      score,
+      maxScore,
+      impact: meta.impact,
+      editUrl: meta.editUrl,
+      claimUrl: meta.claimUrl
+    })
+  }
 
-    return {
-      success: true,
-      pointsGained: wasFixed ? 0 : pointsForPlatform,
-      newScore
-    }
-  } catch (error) {
-    console.error('Mark platform fixed error:', error)
-    return { success: false, pointsGained: 0, newScore: 0 }
+  const maxPossible = Object.values(PLATFORM_WEIGHTS).reduce((a, b) => a + b, 0)
+  const consistencyPercent = Math.round((totalScore / maxPossible) * 100)
+
+  // Persist scan result
+  await supabaseAdmin.from('nap_scans').insert({
+    business_id: businessId,
+    total_score: totalScore,
+    max_score: maxPossible,
+    consistency_percent: consistencyPercent,
+    platform_results: platforms,
+    created_at: new Date().toISOString()
+  })
+
+  return {
+    platforms,
+    totalScore,
+    maxScore: maxPossible,
+    consistencyPercent,
+    topIssues: allIssues.slice(0, 5)
+  }
+}
+
+export async function getNAPStatus(businessId: string): Promise<NAPScanResult | null> {
+  const { data } = await supabaseAdmin
+    .from('nap_scans')
+    .select('*')
+    .eq('business_id', businessId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (!data) return null
+
+  return {
+    platforms: (data.platform_results as PlatformResult[]) || [],
+    totalScore: data.total_score || 0,
+    maxScore: data.max_score || 20,
+    consistencyPercent: data.consistency_percent || 0,
+    topIssues: []
   }
 }
