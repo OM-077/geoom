@@ -1,9 +1,3 @@
-import { Resend } from 'resend'
-import { supabaseAdmin } from './supabase'
-import { scoreToMarketShare } from './utils'
-
-const resend = new Resend(process.env.RESEND_API_KEY!)
-
 // ============================================
 // MONDAY MORNING EMAIL
 // Weekly proof the machine is working
@@ -13,6 +7,12 @@ const resend = new Resend(process.env.RESEND_API_KEY!)
 // This is the retention engine — they stay subscribed
 // because they see progress every Monday morning
 // ============================================
+
+import { Resend } from 'resend'
+import { supabaseAdmin } from './supabase'
+import { scoreToMarketShare } from './utils'
+
+const resend = new Resend(process.env.RESEND_API_KEY!)
 
 export async function sendMondayEmail(businessId: string): Promise<{
   sent: boolean
@@ -79,7 +79,7 @@ export async function sendMondayEmail(businessId: string): Promise<{
   // One specific action based on their current position
   let actionItem = ''
   if (shareNow < 20) {
-    actionItem = `Fix your Foursquare listing today — ChatGPT pulls 70% of local contractor data from Foursquare. Takes 3 minutes. Worth ${12}% more AI market share.`
+    actionItem = `Fix your Foursquare listing today — ChatGPT uses Foursquare data for local business recommendations. Takes 3 minutes. Worth up to 12% more AI market share.`
   } else if (shareNow < 35) {
     actionItem = `Fix your Yelp categories — Perplexity uses Yelp as its primary local data source. You are missing homeowners who ask Perplexity for ${business.trade} recommendations in ${business.city}.`
   } else if (shareNow < 50) {
@@ -216,8 +216,10 @@ export async function sendMondayEmailsToAll(): Promise<{
 
   for (const business of businesses) {
     const result = await sendMondayEmail(business.id)
-    result.sent ? sent++ : failed++
-    await new Promise(r => setTimeout(r, 200))
+    if (result.sent) sent++
+    else failed++
+    // Rate limit: 2/sec
+    await new Promise(r => setTimeout(r, 500))
   }
 
   return { sent, failed }
