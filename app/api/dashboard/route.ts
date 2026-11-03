@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
 import { scoreToMarketShare } from '@/lib/utils'
-import { calculateEstimatedCalls } from '@/lib/audit-engine'
 
 export async function GET(req: NextRequest) {
   try {
@@ -48,7 +47,7 @@ export async function GET(req: NextRequest) {
 
       supabase
         .from('content_pages')
-        .select('id, title, source, city')
+        .select('id, title, source')
         .eq('business_id', business.id)
         .eq('published', true)
         .gte('published_at', oneWeekAgo.toISOString()),
@@ -87,7 +86,7 @@ export async function GET(req: NextRequest) {
         .limit(20)
     ])
 
-    // Mark first citation as celebrated — only shows once
+    // Mark citation as celebrated so it only shows once
     if (firstCitationResult.data) {
       await supabase
         .from('citation_events')
@@ -97,28 +96,14 @@ export async function GET(req: NextRequest) {
 
     const scoreNow = auditsResult.data?.[0]?.visibility_score || 0
     const scoreLast = auditsResult.data?.[1]?.visibility_score || 0
-    const shareNow = auditsResult.data?.[0]?.market_share_percent
-      || scoreToMarketShare(scoreNow)
-    const shareLast = auditsResult.data?.[1]?.market_share_percent
-      || scoreToMarketShare(scoreLast)
+    const shareNow = auditsResult.data?.[0]?.market_share_percent || scoreToMarketShare(scoreNow)
+    const shareLast = auditsResult.data?.[1]?.market_share_percent || scoreToMarketShare(scoreLast)
 
     const competitorScore = competitorResult.data?.competitor_score || 0
     const competitorShare = competitorResult.data?.competitor_market_share
       || scoreToMarketShare(competitorScore)
 
-    // ============================================
-    // ESTIMATED CALLS — council's most important fix
-    // Connects score to revenue
-    // "~21 AI-driven calls this month" keeps
-    // contractors subscribed — a score going from
-    // 67 to 71 does not
-    // ============================================
-    const callEstimates = calculateEstimatedCalls(scoreNow)
-    const previousCallEstimates = calculateEstimatedCalls(scoreLast)
-    const callChange = callEstimates.estimatedCallsPerMonth
-      - previousCallEstimates.estimatedCallsPerMonth
-
-    // Pipeline heartbeat check
+    // Check pipeline heartbeat
     const { data: lastJob } = await supabase
       .from('review_requests')
       .select('created_at')
@@ -128,74 +113,48 @@ export async function GET(req: NextRequest) {
       .single()
 
     const daysSilent = lastJob
-      ? Math.floor(
-          (Date.now() - new Date(lastJob.created_at).getTime()) /
-          (1000 * 60 * 60 * 24)
-        )
+      ? Math.floor((Date.now() - new Date(lastJob.created_at).getTime()) / (1000 * 60 * 60 * 24))
       : 999
 
-    const pipelineInactive =
-      onboardingResult.data?.step_pipeline_connected && daysSilent > 3
+    const { data: onboardingCheck } = await supabase
+      .from('onboarding')
+      .select('step_pipeline_connected')
+      .eq('business_id', business.id)
+      .single()
+
+    const pipelineInactive = onboardingCheck?.step_pipeline_connected && daysSilent > 3
 
     return NextResponse.json({
       success: true,
       business,
       dashboard: {
-        // Score data
         scoreNow,
         scoreLast,
         scoreChange: scoreNow - scoreLast,
         shareNow,
         shareLast,
         shareChange: Math.round((shareNow - shareLast) * 10) / 10,
-
-        // ============================================
-        // REVENUE CONNECTION — show on dashboard
-        // prominently below the radial gauge
-        // "~21 AI-driven calls estimated this month"
-        // ============================================
-        estimatedCallsPerMonth: callEstimates.estimatedCallsPerMonth,
-        estimatedRevenueMin: callEstimates.estimatedRevenueMin,
-        estimatedRevenueMax: callEstimates.estimatedRevenueMax,
-        callChange,
-
-        // Competitor data
-        competitorName: competitorResult.data?.competitor_name
-          || business.competitor_name || '',
+        competitorName: competitorResult.data?.competitor_name || business.competitor_name || '',
         competitorScore,
         competitorShare,
-        competitorAdvantages:
-          (competitorResult.data?.competitor_advantages as string[]) || [],
-
-        // Content data
+        competitorAdvantages: (competitorResult.data?.competitor_advantages as string[]) || [],
         pagesThisWeek: pagesWeekResult.data?.length || 0,
         totalPages: totalPagesResult.count || 0,
         pendingReviews: pendingReviewsResult.data?.length || 0,
-        recentPages: pagesWeekResult.data || [],
-
-        // System data
         auditHistory: auditsResult.data || [],
         onboarding: onboardingResult.data,
         journeyEvents: journeyResult.data || [],
-
-        // Alerts
         pipelineInactive: !!pipelineInactive,
         daysSilent,
-
-        // First citation celebration — fires once
-        firstCitationCelebration: firstCitationResult.data
-          ? {
-              show: true,
-              aiEngine: firstCitationResult.data.ai_engine,
-              queryText: firstCitationResult.data.query_text,
-              scoreBefore: scoreLast,
-              scoreAfter: scoreNow,
-              shareBefore: shareLast,
-              shareAfter: shareNow,
-              estimatedCallsBefore: previousCallEstimates.estimatedCallsPerMonth,
-              estimatedCallsAfter: callEstimates.estimatedCallsPerMonth
-            }
-          : null
+        firstCitationCelebration: firstCitationResult.data ? {
+          show: true,
+          aiEngine: firstCitationResult.data.ai_engine,
+          queryText: firstCitationResult.data.query_text,
+          scoreBefore: scoreLast,
+          scoreAfter: scoreNow,
+          shareBefore: shareLast,
+          shareAfter: shareNow
+        } : null
       }
     })
   } catch (error) {
