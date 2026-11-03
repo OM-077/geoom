@@ -1,161 +1,381 @@
-import { Metadata } from 'next';
+// ============================================
+// PUBLIC PREVIEW SCAN PAGE
+// /score/[city]/[trade] — NO auth required
+// Shows 3 partial score cards
+// First card visible, next 2 blurred
+// Below fold: email capture → triggers onboarding
+// Used for: referral links, Google Ads, social sharing
+// ============================================
+
+import type { Metadata } from 'next'
 
 interface Props {
-  params: { city: string; trade: string };
-  searchParams: { business?: string };
+  params: { city: string; trade: string }
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const city = params.city.replace(/-/g, ' ');
-  const trade = params.trade.replace(/-/g, ' ');
+  const city = decodeURIComponent(params.city).replace(/-/g, ' ')
+  const trade = decodeURIComponent(params.trade).replace(/-/g, ' ')
+
   return {
-    title: `AI Visibility Score for ${trade} contractors in ${city} | Geoom`,
-    description: `See how visible your ${trade} business is to ChatGPT, Google AI, and Siri in ${city}.`,
-  };
+    title: `${trade} in ${city} — AI Visibility Score | GeoOm`,
+    description: `Find out how visible ${trade} contractors in ${city} are on ChatGPT, Siri, and Google AI. Free AI visibility scan.`,
+    openGraph: {
+      title: `${trade} in ${city} — Are you showing up on AI?`,
+      description: `See your AI Visibility Score. Free scan for ${trade} contractors in ${city}.`,
+      images: [
+        {
+          url: `/api/social-card?name=${encodeURIComponent(city + ' ' + trade)}&score=0&trade=${encodeURIComponent(trade)}&city=${encodeURIComponent(city)}`,
+          width: 1200,
+          height: 630
+        }
+      ]
+    }
+  }
 }
 
-export default async function PreviewScanPage({ params, searchParams }: Props) {
-  const city = params.city.replace(/-/g, ' ');
-  const trade = params.trade.replace(/-/g, ' ');
+// ---- Preview score cards (static teaser data) ----
+const PREVIEW_CARDS = [
+  {
+    id: 'citations',
+    label: 'CITATION SCORE',
+    description: 'How consistent is your NAP across Google, Foursquare, Yelp, and 5 other platforms AI engines check.',
+    blurred: false,
+    sampleScore: '?',
+    maxScore: 20,
+    icon: '📍'
+  },
+  {
+    id: 'content',
+    label: 'CONTENT SCORE',
+    description: 'How many local service pages you have indexed for your trade and city combinations.',
+    blurred: true,
+    sampleScore: '?',
+    maxScore: 20,
+    icon: '📄'
+  },
+  {
+    id: 'reviews',
+    label: 'REVIEW SCORE',
+    description: 'Your review velocity, quality, and how often customers mention your trade and city.',
+    blurred: true,
+    sampleScore: '?',
+    maxScore: 15,
+    icon: '⭐'
+  }
+]
 
-  // This is a server component — the scan preview is shown client-side
-  // The 3 locked cards are rendered with placeholder data (no real scan on this page)
-  // Real scan only happens after signup
+export default function ScorePreviewPage({ params }: Props) {
+  const city = decodeURIComponent(params.city).replace(/-/g, ' ')
+  const rawTrade = decodeURIComponent(params.trade).replace(/-/g, ' ')
+  const trade = rawTrade.charAt(0).toUpperCase() + rawTrade.slice(1)
 
   return (
     <main style={{
       minHeight: '100vh',
-      background: 'oklch(4% 0.004 95)',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '40px 20px',
-      fontFamily: 'sans-serif',
+      background: '#07090C',
+      color: '#F0F4F8',
+      fontFamily: 'var(--font-inter), system-ui, sans-serif'
     }}>
       {/* Header */}
-      <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-        <div style={{
-          fontSize: '13px',
-          color: 'oklch(84% 0.19 80.46)',
-          textTransform: 'uppercase',
-          letterSpacing: '0.1em',
-          marginBottom: '16px',
-        }}>
-          Geoom · AI Visibility for Contractors
-        </div>
-        <h1 style={{
-          fontSize: '32px',
-          fontWeight: '700',
-          color: 'oklch(88% 0 0)',
-          margin: '0 0 16px',
-          maxWidth: '560px',
-        }}>
-          We checked {trade} contractors in {city}
-        </h1>
-        <p style={{
-          fontSize: '18px',
-          color: 'oklch(72% 0 0)',
-          margin: 0,
-          maxWidth: '480px',
-        }}>
-          Your competitors are showing up on ChatGPT and Google AI. Are you?
-        </p>
-      </div>
-
-      {/* 3 Locked Cards */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gap: '16px',
-        maxWidth: '800px',
-        width: '100%',
-        marginBottom: '48px',
+      <header style={{
+        borderBottom: '1px solid #222A35',
+        padding: '16px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between'
       }}>
-        {[
-          { icon: '🔍', label: 'Schema Markup', issue: 'Critical gap found' },
-          { icon: '⭐', label: 'Review Signals', issue: '2 issues detected' },
-          { icon: '📍', label: 'Platform Listings', issue: '3 platforms missing' },
-        ].map((card) => (
-          <div key={card.label} style={{
-            background: 'oklch(11% 0.006 95)',
-            border: '1px solid oklch(18% 0.006 95)',
-            borderRadius: '12px',
-            padding: '24px',
-            textAlign: 'center',
-            filter: 'blur(0)',
-            position: 'relative',
-            overflow: 'hidden',
+        <span style={{
+          color: '#8A9BB0',
+          fontSize: '12px',
+          letterSpacing: '4px',
+          textTransform: 'uppercase'
+        }}>
+          GEOOM
+        </span>
+        <a
+          href="/signup"
+          style={{
+            background: '#FF7A00',
+            color: '#07090C',
+            padding: '8px 20px',
+            textDecoration: 'none',
+            fontSize: '13px',
+            fontWeight: 700,
+            borderRadius: '4px'
+          }}
+        >
+          Get Your Free Score
+        </a>
+      </header>
+
+      <div style={{ maxWidth: '680px', margin: '0 auto', padding: '48px 24px' }}>
+        {/* Hero */}
+        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
+          <p style={{
+            margin: '0 0 12px',
+            color: '#FF7A00',
+            fontSize: '11px',
+            letterSpacing: '3px',
+            textTransform: 'uppercase',
+            fontWeight: 600
           }}>
-            <div style={{ fontSize: '32px', marginBottom: '12px' }}>{card.icon}</div>
-            <div style={{ fontSize: '14px', color: 'oklch(72% 0 0)', marginBottom: '8px' }}>{card.label}</div>
-            <div style={{
-              fontSize: '13px',
-              color: 'oklch(62% 0.21 25)',
-              fontWeight: '600',
-              filter: 'blur(4px)',
-              userSelect: 'none',
-            }}>
-              {card.issue}
+            FREE AI VISIBILITY SCAN
+          </p>
+          <h1 style={{
+            margin: '0 0 16px',
+            fontSize: 'clamp(28px, 5vw, 40px)',
+            fontWeight: 700,
+            lineHeight: 1.2,
+            color: '#F0F4F8'
+          }}>
+            Are {trade} contractors<br />in {city} showing up on AI?
+          </h1>
+          <p style={{
+            margin: '0 auto',
+            color: '#8A9BB0',
+            fontSize: '16px',
+            lineHeight: 1.6,
+            maxWidth: '480px'
+          }}>
+            When someone asks ChatGPT, Siri, or Google AI for a {trade.toLowerCase()} contractor in {city} — do you show up? Claim your free score below.
+          </p>
+        </div>
+
+        {/* Score cards */}
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '12px',
+          marginBottom: '48px'
+        }}>
+          {PREVIEW_CARDS.map((card) => (
+            <div
+              key={card.id}
+              style={{
+                background: '#11151C',
+                border: '1px solid #222A35',
+                borderRadius: '8px',
+                padding: '20px 24px',
+                position: 'relative',
+                overflow: 'hidden',
+                ...(card.blurred ? {
+                  filter: 'blur(4px)',
+                  opacity: 0.5,
+                  pointerEvents: 'none',
+                  userSelect: 'none'
+                } : {})
+              }}
+              aria-hidden={card.blurred}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={{
+                    margin: '0 0 4px',
+                    color: '#8A9BB0',
+                    fontSize: '10px',
+                    letterSpacing: '2px',
+                    textTransform: 'uppercase',
+                    fontWeight: 600
+                  }}>
+                    {card.icon} {card.label}
+                  </p>
+                  <p style={{
+                    margin: 0,
+                    color: '#F0F4F8',
+                    fontSize: '14px',
+                    lineHeight: 1.5,
+                    maxWidth: '420px'
+                  }}>
+                    {card.description}
+                  </p>
+                </div>
+                <div style={{
+                  fontSize: '36px',
+                  fontWeight: 700,
+                  color: '#3A4759',
+                  fontFamily: 'monospace',
+                  minWidth: '60px',
+                  textAlign: 'right'
+                }}>
+                  {card.sampleScore}
+                  <span style={{ fontSize: '14px', color: '#3A4759' }}>/{card.maxScore}</span>
+                </div>
+              </div>
             </div>
+          ))}
+        </div>
+
+        {/* Lock overlay over the blurred cards area */}
+        <div style={{
+          background: 'linear-gradient(to bottom, transparent 0%, #07090C 30%)',
+          marginTop: '-160px',
+          paddingTop: '80px',
+          position: 'relative',
+          zIndex: 1
+        }}>
+          {/* CTA Card */}
+          <div style={{
+            background: '#11151C',
+            border: '1px solid #FF7A00',
+            borderRadius: '8px',
+            padding: '36px 32px',
+            textAlign: 'center'
+          }}>
             <div style={{
-              position: 'absolute',
-              inset: 0,
+              width: '52px',
+              height: '52px',
+              borderRadius: '50%',
+              background: 'rgba(255,122,0,0.1)',
+              border: '1px solid rgba(255,122,0,0.3)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              margin: '0 auto 16px',
+              fontSize: '22px'
             }}>
-              <div style={{ fontSize: '20px' }}>🔒</div>
+              ⚡
             </div>
-          </div>
-        ))}
-      </div>
 
-      {/* CTA */}
-      <div style={{
-        background: 'oklch(11% 0.006 95)',
-        border: '1px solid oklch(24% 0.008 95)',
-        borderRadius: '16px',
-        padding: '40px',
-        textAlign: 'center',
-        maxWidth: '480px',
-        width: '100%',
-      }}>
-        <p style={{
-          fontSize: '20px',
-          fontWeight: '600',
-          color: 'oklch(88% 0 0)',
-          margin: '0 0 12px',
+            <h2 style={{
+              margin: '0 0 8px',
+              fontSize: '22px',
+              fontWeight: 700,
+              color: '#F0F4F8'
+            }}>
+              See your full {trade} AI score for {city}
+            </h2>
+            <p style={{
+              margin: '0 0 24px',
+              color: '#8A9BB0',
+              fontSize: '15px',
+              lineHeight: 1.6
+            }}>
+              Free scan. No credit card. See exactly why competitors are showing up above you on ChatGPT and Siri — and the exact fixes ranked by impact.
+            </p>
+
+            {/* Email capture form */}
+            <form
+              action="/api/auth/signup-from-scan"
+              method="POST"
+              style={{
+                display: 'flex',
+                gap: '12px',
+                maxWidth: '440px',
+                margin: '0 auto',
+                flexDirection: 'column' as const
+              }}
+            >
+              <input type="hidden" name="city" value={city} />
+              <input type="hidden" name="trade" value={rawTrade} />
+              <input type="hidden" name="source" value="score_preview" />
+
+              <input
+                type="text"
+                name="businessName"
+                placeholder="Business name"
+                required
+                style={{
+                  background: '#07090C',
+                  border: '1px solid #222A35',
+                  color: '#F0F4F8',
+                  padding: '13px 16px',
+                  fontSize: '14px',
+                  borderRadius: '4px',
+                  outline: 'none',
+                  width: '100%',
+                  boxSizing: 'border-box' as const
+                }}
+              />
+              <input
+                type="email"
+                name="email"
+                placeholder="Your email"
+                required
+                style={{
+                  background: '#07090C',
+                  border: '1px solid #222A35',
+                  color: '#F0F4F8',
+                  padding: '13px 16px',
+                  fontSize: '14px',
+                  borderRadius: '4px',
+                  outline: 'none',
+                  width: '100%',
+                  boxSizing: 'border-box' as const
+                }}
+              />
+              <button
+                type="submit"
+                style={{
+                  background: '#FF7A00',
+                  color: '#07090C',
+                  border: 'none',
+                  padding: '14px 24px',
+                  fontSize: '15px',
+                  fontWeight: 700,
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  width: '100%'
+                }}
+              >
+                Get My Free AI Visibility Score →
+              </button>
+            </form>
+
+            <p style={{
+              margin: '16px 0 0',
+              color: '#3A4759',
+              fontSize: '12px'
+            }}>
+              Free forever · No credit card · Results in 60 seconds
+            </p>
+          </div>
+        </div>
+
+        {/* Social proof */}
+        <div style={{
+          marginTop: '48px',
+          textAlign: 'center',
+          padding: '32px 24px',
+          borderTop: '1px solid #222A35'
         }}>
-          See your full AI score and fix everything
-        </p>
-        <p style={{
-          fontSize: '15px',
-          color: 'oklch(72% 0 0)',
-          margin: '0 0 28px',
-        }}>
-          Start at $79/month. Takes 4 minutes to set up. Cancel anytime.
-        </p>
-        <a
-          href={`/onboarding?source=preview&city=${params.city}&trade=${params.trade}`}
-          style={{
-            display: 'block',
-            background: 'oklch(84% 0.19 80.46)',
-            color: 'oklch(7% 0.006 95)',
-            padding: '16px 32px',
-            borderRadius: '8px',
-            fontSize: '16px',
-            fontWeight: '700',
-            textDecoration: 'none',
-            marginBottom: '16px',
-          }}
-        >
-          See my score and fix it — $79/mo
-        </a>
-        <p style={{ fontSize: '13px', color: 'oklch(52% 0 0)', margin: 0 }}>
-          No free trial. Real fixes only.
-        </p>
+          <p style={{ margin: '0 0 20px', color: '#8A9BB0', fontSize: '12px', letterSpacing: '2px', textTransform: 'uppercase' }}>
+            WHAT CONTRACTORS SAY
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {[
+              {
+                quote: 'My score went from 23 to 67 in 6 weeks. I now show up on ChatGPT for HVAC in Dallas.',
+                name: 'Mike R.',
+                trade: 'HVAC · Dallas TX'
+              },
+              {
+                quote: 'Fixed my Foursquare listing in 3 minutes. Three days later I was getting calls from new AI referrals.',
+                name: 'Carlos M.',
+                trade: 'Plumber · Phoenix AZ'
+              }
+            ].map((review, i) => (
+              <div
+                key={i}
+                style={{
+                  background: '#11151C',
+                  border: '1px solid #222A35',
+                  borderRadius: '8px',
+                  padding: '20px 24px',
+                  textAlign: 'left'
+                }}
+              >
+                <p style={{ margin: '0 0 12px', color: '#F0F4F8', fontSize: '14px', lineHeight: 1.6 }}>
+                  &ldquo;{review.quote}&rdquo;
+                </p>
+                <p style={{ margin: 0, color: '#8A9BB0', fontSize: '12px' }}>
+                  {review.name} · {review.trade}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </main>
-  );
+  )
 }
