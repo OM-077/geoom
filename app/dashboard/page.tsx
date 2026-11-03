@@ -1,6 +1,7 @@
 
 import Sidebar from '@/components/shared/Sidebar'
 import AlertBanner from '@/components/dashboard/AlertBanner'
+import AiVisibilityTrend from '@/components/dashboard/AiVisibilityTrend'
 import ScoreRow from '@/components/dashboard/ScoreRow'
 import WeeklyActionCard from '@/components/dashboard/WeeklyActionCard'
 import ScoreChart from '@/components/dashboard/ScoreChart'
@@ -25,6 +26,8 @@ const MOCK = {
   scoreHistory: [6,12,18,21,25,27,26,30,31,33,34,34],
   weekLabels: ['Aug 5','Aug 12','Aug 19','Aug 26','Sep 2','Sep 9','Sep 16','Sep 23','Sep 30','Oct 7','Oct 14','Oct 21'],
   weekStatuses: ['done','done','done','done','done','missed','done','done','done','done','done','pending'] as const,
+  gbpImpressions: [120, 145, 138, 160, 175, 190, 182, 210],
+reviewVelocity: [1, 0, 2, 1, 3, 2, 2, 3],
   currentAction: {
     id: 'faq-schema-001',
     title: 'Add FAQ schema to your website',
@@ -81,7 +84,11 @@ export default function DashboardPage() {
           scoreHistory={d.scoreHistory}
           platformCoverage={d.platformCoverage}
         />
-
+<AiVisibilityTrend
+  scoreHistory={d.scoreHistory}
+  gbpImpressions={d.gbpImpressions}
+  reviewVelocity={d.reviewVelocity}
+/>
         {/* This week's action */}
         <div className="mt-5">
           <WeeklyActionCard action={d.currentAction} nextActionDate="Monday Oct 28" />
