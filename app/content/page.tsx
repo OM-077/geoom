@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Sidebar from "@/components/Sidebar";
+
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -964,7 +964,7 @@ export default function ContentPage() {
           "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
       }}
     >
-      <Sidebar activeItem="Content" />
+      
 
       {/* Main content */}
       <main style={{ flex: 1, minWidth: 0, padding: "32px 28px", overflowY: "auto" }}>
