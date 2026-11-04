@@ -13,7 +13,7 @@ const signals = [
     weight: 25, pts: 2, max: 25,
     status: 'CRITICAL' as const,
     explain:
-      'You have no FAQ section. FAQ blocks are cited by AI 2.7× more than regular content. AI has nothing to quote when recommending you.',
+      'You have no FAQ section. FAQ blocks are cited by AI 2.7x more than regular content. AI has nothing to quote when recommending you.',
   },
   {
     name: 'GBP Completeness',
@@ -51,12 +51,12 @@ const faqs = [
     a: 'AI assistants read structured data first. Schema tells them exactly what you do, where you do it, and who to call — in their language.',
   },
   {
-    q: 'Why do FAQ blocks get cited 2.7× more?',
-    a: "AI systems are trained to pull from well-structured question-and-answer content because it's easy to quote directly.",
+    q: 'Why do FAQ blocks get cited 2.7x more?',
+    a: 'AI systems are trained to pull from well-structured question-and-answer content because it is easy to quote directly.',
   },
   {
     q: 'What does GBP completeness affect?',
-    a: 'Siri and Google AI Overview pull directly from Google Business Profile. If your hours, service area, or description are missing, those platforms can't recommend you.',
+    a: 'Siri and Google AI Overview pull directly from Google Business Profile. If your hours, service area, or description are missing, those platforms cannot recommend you.',
   },
   {
     q: 'Why does citation consistency matter?',
@@ -67,7 +67,6 @@ const faqs = [
 export default function ScoreBreakdownTab() {
   return (
     <div>
-      {/* Signal rows */}
       <div className="rounded-lg overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
         {signals.map((sig, i) => {
           const s = st[sig.status]
@@ -81,7 +80,6 @@ export default function ScoreBreakdownTab() {
                 background: 'var(--raised-lacquer)',
               }}
             >
-              {/* Header row */}
               <div className="flex items-center gap-2.5 mb-2.5">
                 <span
                   className="text-[10px] font-semibold uppercase tracking-[1px] px-2 py-0.5 rounded-sm"
@@ -89,23 +87,15 @@ export default function ScoreBreakdownTab() {
                 >
                   {s.label}
                 </span>
-                <span
-                  className="text-[15px] font-semibold flex-1"
-                  style={{ color: 'var(--champagne)' }}
-                >
+                <span className="text-[15px] font-semibold flex-1" style={{ color: 'var(--champagne)' }}>
                   {sig.name}
                 </span>
                 <span className="text-xs" style={{ color: 'var(--text-dim)' }}>
                   {sig.weight}% weight
                 </span>
               </div>
-
-              {/* Progress bar */}
               <div className="flex items-center gap-2.5 mb-2">
-                <div
-                  className="flex-1 h-1 rounded-full"
-                  style={{ background: 'var(--lacquer-deep)' }}
-                >
+                <div className="flex-1 h-1 rounded-full" style={{ background: 'var(--lacquer-deep)' }}>
                   <div
                     className="h-full rounded-full"
                     style={{ width: `${(sig.pts / sig.max) * 100}%`, background: s.color }}
@@ -115,8 +105,6 @@ export default function ScoreBreakdownTab() {
                   {sig.pts} / {sig.max} pts
                 </span>
               </div>
-
-              {/* Explanation */}
               {sig.explain && (
                 <p className="text-sm leading-relaxed" style={{ color: 'var(--text-warm)' }}>
                   {sig.explain}
@@ -131,18 +119,13 @@ export default function ScoreBreakdownTab() {
         Fix your biggest gap first. One action. 10 minutes on Monday.
       </p>
 
-      {/* FAQ section */}
       <div className="mt-9" itemScope itemType="https://schema.org/FAQPage">
-        <h2
-          className="font-barlow font-semibold text-[28px] mb-1.5"
-          style={{ color: 'var(--champagne)' }}
-        >
+        <h2 className="font-barlow font-semibold text-[28px] mb-1.5" style={{ color: 'var(--champagne)' }}>
           Why each signal matters
         </h2>
         <p className="text-sm mb-5" style={{ color: 'var(--text-muted)' }}>
           How AI systems actually use each signal to decide who to recommend.
         </p>
-
         {faqs.map((f) => (
           <details
             key={f.q}
@@ -157,9 +140,7 @@ export default function ScoreBreakdownTab() {
               itemProp="name"
             >
               {f.q}
-              <span className="chevron ml-3 shrink-0 text-sm" style={{ color: 'var(--text-dim)' }}>
-                ▾
-              </span>
+              <span className="chevron ml-3 shrink-0 text-sm" style={{ color: 'var(--text-dim)' }}>▾</span>
             </summary>
             <p
               className="pb-4 text-sm leading-relaxed"
