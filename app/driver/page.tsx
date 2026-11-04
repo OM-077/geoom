@@ -533,7 +533,7 @@ export default function FixPlanPage() {
           >
             <div>
               <p style={{ fontWeight: 600, fontSize: 14, margin: "0 0 4px", color: "#fff" }}>
-                You haven't started Week {selectedWeek} yet.
+                You haven&apos;t started Week {selectedWeek} yet.
               </p>
               <p style={{ fontSize: 13, color: "rgba(255,255,255,0.48)", margin: 0 }}>
                 Contractors who complete Week 1 tasks improve their score by an average of +12 points.
