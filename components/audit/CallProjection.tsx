@@ -1,4 +1,3 @@
-
 import { estimatedCalls, scoreColor } from '@/lib/utils'
 
 interface Props { score: number; city: string; trade: string }
@@ -30,3 +29,4 @@ export default function CallProjection({ score, city, trade }: Props) {
       </p>
     </section>
   )
+}
