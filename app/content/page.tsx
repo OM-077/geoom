@@ -485,7 +485,7 @@ function GradeTab() {
           {result.working.length > 0 && (
             <div style={{ marginBottom: 20 }}>
               <p style={{ fontSize: 11, fontWeight: 700, color: "#22C55E", letterSpacing: "0.08em", margin: "0 0 10px" }}>
-                WHAT'S WORKING
+                                WHAT&apos;S WORKING
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {result.working.slice(0, 2).map((item, i) => (
