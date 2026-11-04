@@ -806,7 +806,7 @@ function SchemaTab({
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {[
             "Copy the JSON-LD code block above for the schema type you need.",
-            'Paste it inside a <script type="application/ld+json"> tag in your page\'s <head>.',
+            "Paste it inside a <script type=\"application/ld+json\"> tag in your page's <head>.",
             "Validate it at schema.org/validator, then re-run your audit here to confirm detection.",
           ].map((step, i) => (
             <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
