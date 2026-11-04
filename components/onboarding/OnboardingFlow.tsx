@@ -58,7 +58,7 @@ export default function OnboardingFlow() {
   const calls = estimatedCalls(score)
   const futureCalls = estimatedCalls(70)
   const color = scoreColor(score)
-
+// eslint-disable-next-line react-hooks/exhaustive-deps
   // If trade in URL, skip step 0
   useEffect(() => {
     if (searchParams.get('trade')) setStep(1)
