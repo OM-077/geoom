@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 // ⚠️ Swap for your own DB client (see getLeaderboard below).
-import { sql } from "@/lib/db";
+import { createClient } from '@supabase/supabase-js'
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 /* Public page — no auth. Cache rendered output for an hour. */
 export const revalidate = 3600;
@@ -78,28 +79,19 @@ function claimHref(row: LeaderboardRow, city: string, trade: string): string {
 
 /* ------------------------------ Data ------------------------------- */
 async function getLeaderboard(city: string, trade: string): Promise<LeaderboardRow[]> {
-  /*
-   * Matches case-insensitively and ignores hyphen/underscore differences, so
-   * /leaderboard/los-angeles/pest-control finds "Los Angeles" / "pest_control".
-   *
-   * Assumes `sql` is a tagged-template client (e.g. postgres.js / Neon).
-   * Supabase equivalent:
-   *   supabase.from("leaderboard_cache").select("*")
-   *     .ilike("city", city).ilike("trade", trade)
-   *     .order("rank", { ascending: true }).limit(20)
-   */
   try {
-    const rows = await sql`
-      SELECT * FROM leaderboard_cache
-      WHERE LOWER(REPLACE(REPLACE(city,  '_', ' '), '-', ' ')) = LOWER(${city})
-        AND LOWER(REPLACE(REPLACE(trade, '_', ' '), '-', ' ')) = LOWER(${trade})
-      ORDER BY rank ASC
-      LIMIT 20
-    `;
-    return rows as unknown as LeaderboardRow[];
+    const { data, error } = await supabase
+      .from('leaderboard_cache')
+      .select('*')
+      .ilike('city', city)
+      .ilike('trade', trade)
+      .order('rank', { ascending: true })
+      .limit(20)
+    if (error) throw error
+    return (data ?? []) as unknown as LeaderboardRow[]
   } catch (err) {
-    console.error("leaderboard_cache query failed", err);
-    return [];
+    console.error('leaderboard_cache query failed', err)
+    return []
   }
 }
 
