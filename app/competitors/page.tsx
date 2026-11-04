@@ -446,7 +446,7 @@ export default function CompetitorsPage() {
           }}
         >
           <p style={{ fontSize: 13, fontWeight: 700, margin: "0 0 16px", color: "#fff" }}>
-            What <span style={{ color: "#f59e0b" }}>#{top.rank} {top.name}</span> has that you don't
+            What <span style={{ color: "#f59e0b" }}>#{top.rank} {top.name}</span> has that you don&apos;t
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {gaps.map((g) => (
@@ -533,7 +533,7 @@ export default function CompetitorsPage() {
             <div style={{ padding: "14px 20px 18px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
               <p style={{ fontSize: 13, color: "rgba(255,255,255,0.42)", lineHeight: 1.65, margin: 0, maxWidth: 640 }}>
                 Competitor rankings are built by pulling public listing data from Google Places, aggregating review
-                counts, ratings, and website structured data. Geoom's scoring engine evaluates each business across
+                counts, ratings, and website structured data. Geoom&apos;s scoring engine evaluates each business across
                 six AI-visibility buckets — Entity, Citations, Reviews, Content, Schema, and Freshness — using the
                 same methodology applied to your own score. Unclaimed businesses are anonymised. Data refreshes
                 every 24 hours. Estimated monthly calls are modelled from score against regional conversion benchmarks
