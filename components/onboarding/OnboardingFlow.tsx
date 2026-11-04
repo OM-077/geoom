@@ -62,6 +62,7 @@ export default function OnboardingFlow() {
   // If trade in URL, skip step 0
   useEffect(() => {
     if (searchParams.get('trade')) setStep(1)
+      // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function goTo(n: number) { setStep(n) }
