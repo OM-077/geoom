@@ -4,7 +4,7 @@
 // Used for: Monday email share, dashboard share, referral links
 // Public — no auth required
 // ============================================
-
+/** @jsxImportSource react */
 import { ImageResponse } from '@vercel/og'
 import { NextRequest } from 'next/server'
 
