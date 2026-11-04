@@ -1,6 +1,5 @@
-import type { NextConfig } from 'next'
-
-const nextConfig: NextConfig = {
+/** @type {import('next').NextConfig} */
+const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   images: { remotePatterns: [] },
@@ -13,10 +12,6 @@ const nextConfig: NextConfig = {
         { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' }
       ]
     }
-  ],
-  redirects: async () => [
-    { source: '/login', destination: '/auth', permanent: true },
-    { source: '/signup', destination: '/auth', permanent: true }
   ]
 }
 
