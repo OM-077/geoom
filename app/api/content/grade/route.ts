@@ -108,7 +108,7 @@ Return ONLY valid JSON with this exact structure:
     const result = await callAIJSON<ContentGradeResult>(
       prompt,
       FALLBACK_RESULT,
-      { maxTokens: 600, temperature: 0.2, feature: 'content_grader' }
+      { maxTokens: 600, temperature: 0.2 }
     )
 
     // Clamp all scores to valid ranges
