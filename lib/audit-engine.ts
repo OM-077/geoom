@@ -424,7 +424,18 @@ Return JSON only:
 }
 
 // ---- MAIN AUDIT FUNCTION ----
-export async function runAudit(businessId: string): Promise<AuditResult> {
+export async function runAudit(input: {
+  businessId: string
+  businessName?: string
+  trade?: string
+  city?: string
+  state?: string
+  competitorName?: string
+  napScore?: number
+  contentCount?: number
+  forceRefresh?: boolean
+}): Promise<AuditResult> {
+  const businessId = input.businessId
   const { data: business } = await supabaseAdmin
     .from('businesses')
     .select('*')
