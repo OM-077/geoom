@@ -24,26 +24,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Platform required' }, { status: 400 })
     }
 
-    const result = await markPlatformFixed({
-      businessId: business.id,
-      platform: platform.toLowerCase()
-    })
+    // Run a fresh NAP scan
+    const scanResult = await runNAPScan(business.id)
 
-    if (result.success && result.pointsGained > 0) {
+    const platformResult = scanResult.platforms.find(p => p.key === platform.toLowerCase())
+    const pointsGained = platformResult?.score ?? 0
+
+    if (pointsGained > 0) {
       const platformDisplay = platform.charAt(0).toUpperCase() + platform.slice(1)
       await logJourneyEvent({
         businessId: business.id,
         eventType: JOURNEY_EVENTS.NAP_PLATFORM_FIXED,
-        pointsGained: result.pointsGained,
+        pointsGained,
         description: `Fixed ${platformDisplay} listing — NAP data now consistent across all platforms`,
-        metadata: { platform: platform.toLowerCase(), new_nap_score: result.newScore }
+        metadata: { platform: platform.toLowerCase(), new_nap_score: scanResult.consistencyPercent }
       })
     }
 
     return NextResponse.json({
-      success: result.success,
-      pointsGained: result.pointsGained,
-      newNapScore: result.newScore
+      success: true,
+      pointsGained,
+      newNapScore: scanResult.consistencyPercent
     })
   } catch (error) {
     console.error('NAP rescan error:', error)
