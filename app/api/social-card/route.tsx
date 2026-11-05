@@ -5,7 +5,7 @@
 // Public — no auth required
 // ============================================
 /** @jsxImportSource react */
-import { ImageResponse } from '@vercel/og'
+import { ImageResponse } from 'next/og'
 import { NextRequest } from 'next/server'
 
 export const runtime = 'edge'
