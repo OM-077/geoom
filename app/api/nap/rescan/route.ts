@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
-import { scanNAP } from '@/lib/nap-scanner'
+import { runNAPScan } from '@/lib/nap-scanner'
 import { logJourneyEvent, JOURNEY_EVENTS } from '@/lib/journey-engine'
 
 export async function POST(req: NextRequest) {
