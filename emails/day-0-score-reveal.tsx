@@ -88,7 +88,7 @@ export default function Day0ScoreReveal({
     <Html lang="en">
       <Head />
       <Preview>
-        {businessName}: your AI Visibility Score is {score}/100 — here&apos;s your #1 fix
+       {businessName}: your AI Visibility Score is {String(score)}/100 — here&apos;s your #1 fix
       </Preview>
       <Body style={{ margin: 0, padding: 0, background: '#07090C', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
         <Container style={{ maxWidth: '560px', margin: '0 auto', padding: '32px 16px' }}>
