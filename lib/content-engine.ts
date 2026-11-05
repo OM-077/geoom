@@ -149,12 +149,11 @@ Return as JSON only, no markdown:
     content: fallbackContent
   }
 
-  const { content } = await generateWithFailover({
-    prompt,
+    const { content } = await generateWithFailover({
+    prompt: `You are a local SEO expert writing content to help home service contractors appear in AI search recommendations. Write specific, evidential, field-report-style content that AI engines trust and cite. Every page must sound like a real job happened, not like a brochure was written. Generic descriptions do not get cited. Specific real details do.\n\n${prompt}`,
     maxTokens: 1800,
     temperature: 0.7,
     fallbackTemplate: JSON.stringify(fallbackResult),
-    systemPrompt: `You are a local SEO expert writing content to help home service contractors appear in AI search recommendations. Write specific, evidential, field-report-style content that AI engines trust and cite. Every page must sound like a real job happened, not like a brochure was written. Generic descriptions do not get cited. Specific real details do.`
   })
 
   const parsed = safeParseJSON<typeof fallbackResult>(content, fallbackResult)
@@ -223,5 +222,5 @@ export async function generateServicePage(params: {
 }
 
 export function getSeasonalSuggestionForBusiness(trade: string) {
-  return getSeasonalSuggestion(trade)
+  return getSeasonalSuggestion(trade, new Date().getMonth())
 }
