@@ -71,7 +71,8 @@ const config: Config = {
 'score-lg': ['3rem',   { lineHeight: '1', fontWeight: '700' }],
 'score-md': ['2rem',   { lineHeight: '1', fontWeight: '700' }],
         // Interface
-        'label':    ['0.6875rem', { lineHeight: '1', letterSpacing: '0.2em' }]
+       'label':    ['0.6875rem', { lineHeight: '1', letterSpacing: '0.2em' }]
+      },
       borderRadius: {
         'card': '0.5rem',
         'pill': '9999px'
