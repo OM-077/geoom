@@ -59,8 +59,8 @@ export async function POST(req: NextRequest) {
         businessId: business.id,
         eventType: JOURNEY_EVENTS.AUDIT_SCORE_INCREASE,
         pointsGained: increase,
-        description: `AI audit complete — market share increased to ${result.marketShare}%`,
-        metadata: { new_score: result.score, new_share: result.marketShare }
+        description: `AI audit complete — market share increased to ${result.marketSharePercent}%`,
+metadata: { new_score: result.score, new_share: result.marketSharePercent }
       })
     }
 
