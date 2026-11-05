@@ -67,9 +67,9 @@ const config: Config = {
       },
       fontSize: {
         // Score display — big numbers
-        'score-xl': ['4rem',   { lineHeight: '1', fontWeight: '700', fontFamily: 'var(--font-mono)' }],
-        'score-lg': ['3rem',   { lineHeight: '1', fontWeight: '700', fontFamily: 'var(--font-mono)' }],
-        'score-md': ['2rem',   { lineHeight: '1', fontWeight: '700', fontFamily: 'var(--font-mono)' }],
+        'score-xl': ['4rem',   { lineHeight: '1', fontWeight: '700' }],
+'score-lg': ['3rem',   { lineHeight: '1', fontWeight: '700' }],
+'score-md': ['2rem',   { lineHeight: '1', fontWeight: '700' }],
         // Interface
         'label':    ['0.6875rem', { lineHeight: '1', letterSpacing: '0.2em', textTransform: 'uppercase' }]
       },
