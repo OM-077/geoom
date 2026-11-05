@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
         jobCity: body.jobCity || business.city,
         jobDescription: body.jobDescription
       })
-      return NextResponse.json({ success: result.success, ...result })
+      return NextResponse.json({ ...result })
     }
 
     const page = await generateServicePage({
