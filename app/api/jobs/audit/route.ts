@@ -70,23 +70,22 @@ export async function POST(req: NextRequest) {
         .single()
 
       if (!existingCitation) {
-        const citedQuery = result.queryResults.find(r => r.cited)
-        await supabaseAdmin.from('citation_events').insert({
-          business_id: businessId,
-          first_citation: true,
-          ai_engine: citedQuery?.engine || 'Gemini',
-          query_text: citedQuery?.query || '',
-          celebrated: false
-        })
+  await supabaseAdmin.from('citation_events').insert({
+    business_id: businessId,
+    first_citation: true,
+    ai_engine: 'Gemini',
+    query_text: '',
+    celebrated: false
+  })
 
-        await logJourneyEvent({
-          businessId,
-          eventType: JOURNEY_EVENTS.FIRST_CITATION,
-          pointsGained: 12,
-          description: `First AI citation detected — you are now being recommended by AI search engines`,
-          metadata: { engine: citedQuery?.engine, query: citedQuery?.query }
-        })
-      }
+  await logJourneyEvent({
+    businessId,
+    eventType: JOURNEY_EVENTS.FIRST_CITATION,
+    pointsGained: 12,
+    description: `First AI citation detected — you are now being recommended by AI search engines`,
+    metadata: { engine: 'Gemini', query: '' }
+  })
+}
     }
 
     // Run competitor analysis if set
