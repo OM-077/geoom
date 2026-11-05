@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         phone: business.phone || '',
         website: business.website || ''
       })
-      return NextResponse.json({ success: result.success, ...result })
+      return NextResponse.json({ ...result })
     }
 
     if (body.action === 'post' && body.text) {
