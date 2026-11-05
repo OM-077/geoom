@@ -17,16 +17,7 @@ export async function POST(req: NextRequest) {
 
     if (!business) return NextResponse.json({ error: 'No business found' }, { status: 404 })
 
-    const result = await runNAPScan({
-      businessId: business.id,
-      businessName: business.business_name,
-      trade: business.trade,
-      city: business.city,
-      state: business.state,
-      phone: business.phone || '',
-      address: business.address || business.city,
-      website: business.website || ''
-    })
+    const result = await runNAPScan(business.id)
 
     return NextResponse.json({ success: true, ...result })
   } catch (error) {
