@@ -74,8 +74,8 @@ export async function POST(req: NextRequest) {
 
     const reply = await callAI(fullPrompt, {
       maxTokens: 400,
-      temperature: 0.4,
-      feature: 'copilot'
+      temperature: 0.4
+
     })
 
     return NextResponse.json({ reply: reply.trim() })
