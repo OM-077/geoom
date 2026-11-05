@@ -61,7 +61,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Detect first citation
-    if ((result.buckets?.citations?.score ?? 0) > 0) {
+    if ((result.buckets?.citations ?? 0) > 0) {
       const { data: existingCitation } = await supabaseAdmin
         .from('citation_events')
         .select('id')
