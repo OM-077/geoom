@@ -146,7 +146,7 @@ export async function getReferralNetwork(businessId: string): Promise<{
       credit_applied: r.credit_applied,
       created_at: r.created_at,
       referred_business_name:
-        (r.businesses as { business_name: string } | null)?.business_name
+        (r.businesses as unknown as { business_name: string } | null)?.business_name
     })),
     totalCreditsEarned
   }
