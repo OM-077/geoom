@@ -6,22 +6,22 @@
 @tailwind utilities;
 
 :root {
-  --lacquer-black:   oklch(7% 0.006 95);
-  --lacquer-deep:    oklch(4% 0.004 95);
-  --raised-lacquer:  oklch(11% 0.006 95);
-  --border-subtle:   oklch(18% 0.006 95);
-  --border-strong:   oklch(24% 0.008 95);
-  --champagne:       oklch(91% 0 0);
-  --text-warm:       oklch(88% 0 0);
-  --text-muted:      oklch(72% 0 0);
-  --text-dim:        oklch(52% 0 0);
-  --kinpaku-gold:    oklch(84% 0.19 80.46);
-  --kinpaku-pale:    oklch(86% 0.07 84);
-  --verdigris:       oklch(70% 0.12 188);
-  --score-red:       oklch(62% 0.21 25);
-  --score-amber:     oklch(75% 0.17 68);
-  --score-green:     oklch(72% 0.18 145);
-  --ring:            oklch(84% 0.19 80.46);
+  --lacquer-black:   #0d0d0b;
+  --lacquer-deep:    #060604;
+  --raised-lacquer:  #191917;
+  --border-subtle:   #272724;
+  --border-strong:   #363632;
+  --champagne:       #e8e8e8;
+  --text-warm:       #e0e0e0;
+  --text-muted:      #b8b8b8;
+  --text-dim:        #858585;
+  --kinpaku-gold:    #d4a847;
+  --kinpaku-pale:    #d9c98a;
+  --verdigris:       #4aac9e;
+  --score-red:       #c43a2a;
+  --score-amber:     #c48a1a;
+  --score-green:     #4aaa5a;
+  --ring:            #d4a847;
 }
 
 html {
