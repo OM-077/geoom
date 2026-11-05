@@ -81,7 +81,7 @@ export default function Day7CompetitorMoved({
     <Html lang="en">
       <Head />
       <Preview>
-        {topCompetitor.name} is {gap} points ahead of you on AI — here&apos;s how to close the gap
+        {topCompetitor.name} is {String(gap)} points ahead of you on AI — here&apos;s how to close the gap
       </Preview>
       <Body style={{ margin: 0, padding: 0, background: '#07090C', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif' }}>
         <Container style={{ maxWidth: '560px', margin: '0 auto', padding: '32px 16px' }}>
