@@ -46,7 +46,7 @@ export async function getReferralByCode(code: string): Promise<{
 
   if (!data) return { valid: false }
 
-  const business = data.businesses as { business_name: string } | null
+const business = (data.businesses as unknown) as { business_name: string } | null
 
   return {
     valid: true,
