@@ -88,3 +88,36 @@ export function getSeasonalSuggestion(trade: string): string {
   }
   return map[trade.toLowerCase()]?.[season] ?? `Seasonal ${getTradeLabel(trade)} services`
 }
+export function getTradeServices(trade: string): string[] {
+  const map: Record<string, string[]> = {
+    HVAC:       ['Furnace installation', 'AC repair', 'Heat pump service', 'Emergency HVAC', 'Duct cleaning'],
+    Plumbing:   ['Water heater replacement', 'Drain cleaning', 'Pipe repair', 'Emergency plumbing', 'Fixture installation'],
+    Electrical: ['Panel upgrade', 'Wiring repair', 'Outlet installation', 'Emergency electrical', 'EV charger installation'],
+    Roofing:    ['Roof replacement', 'Leak repair', 'Gutter installation', 'Storm damage repair', 'Roof inspection'],
+  }
+  return map[trade] ?? map['HVAC']
+}
+
+export function getPriceRange(trade: string): { low: number; high: number; unit: string } {
+  const map: Record<string, { low: number; high: number; unit: string }> = {
+    HVAC:       { low: 89,    high: 12000, unit: 'service' },
+    Plumbing:   { low: 150,   high: 3500,  unit: 'service' },
+    Electrical: { low: 150,   high: 5000,  unit: 'service' },
+    Roofing:    { low: 500,   high: 25000, unit: 'project' },
+  }
+  return map[trade] ?? map['HVAC']
+}
+
+export function getSeasonalSuggestion(trade: string, month: number): string {
+  if (trade === 'HVAC') {
+    if (month >= 10 || month <= 2) return 'furnace tune-up before winter'
+    if (month >= 3 && month <= 5) return 'AC tune-up before summer'
+    return 'emergency cooling service'
+  }
+  if (trade === 'Roofing') {
+    if (month >= 3 && month <= 5) return 'post-winter roof inspection'
+    if (month >= 6 && month <= 8) return 'storm damage repair'
+    return 'gutter cleaning before winter'
+  }
+  return 'seasonal maintenance service'
+}
