@@ -1,5 +1,4 @@
-ContentTabs.tsx
-components/content/ContentTabs.tsx
+
 'use client'
 import { useState } from 'react'
 import LlmsTxtTab from './LlmsTxtTab'
