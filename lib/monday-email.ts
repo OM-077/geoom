@@ -58,11 +58,19 @@ export async function sendMondayEmail(businessId: string): Promise<{
     .limit(1)
     .single()
 
-  const { data: pendingReviews } = await supabaseAdmin
+    const { data: pendingReviews } = await supabaseAdmin
     .from('review_requests')
     .select('id')
     .eq('business_id', businessId)
     .eq('sent', false)
+
+  const { data: journeyThisWeek } = await supabaseAdmin
+    .from('journey_events')
+    .select('description, points_gained')
+    .eq('business_id', businessId)
+    .gte('created_at', oneWeekAgo.toISOString())
+    .order('created_at', { ascending: false })
+    .limit(5)
 
   const scoreNow = audits?.[0]?.visibility_score || 0
   const scoreLast = audits?.[1]?.visibility_score || 0
@@ -149,8 +157,15 @@ export async function sendMondayEmail(businessId: string): Promise<{
 
 <tr><td height="16"></td></tr>
 
-${pendingCount > 0 ? `
-<tr><td style="background:rgba(0,230,118,0.08);border:1px solid #00E676;padding:16px;">
+${journeyThisWeek && journeyThisWeek.length > 0 ? `
+<tr><td style="background:#11151C;border:1px solid #222A35;padding:20px;margin-bottom:16px;">
+  <p style="margin:0;color:#8A9BB0;font-size:10px;text-transform:uppercase;letter-spacing:2px;font-weight:700;">THIS WEEK — WHAT MOVED YOUR SCORE</p>
+  ${journeyThisWeek.map(e => `
+  <p style="margin:8px 0 0;color:#F0F4F8;font-size:13px;line-height:1.5;">
+    <span style="color:#00E676;font-weight:700;">+${e.points_gained}pts</span> — ${e.description}
+  </p>`).join('')}
+</td></tr>
+<tr><td height="16"></td></tr>` : ''}
   <p style="margin:0;color:#00E676;font-size:13px;font-weight:600;">${pendingCount} review request${pendingCount > 1 ? 's' : ''} ready to send</p>
   <p style="margin:4px 0 0;color:#8A9BB0;font-size:12px;">Open your dashboard to copy and send them — takes 30 seconds each.</p>
 </td></tr>
