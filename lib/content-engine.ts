@@ -24,8 +24,9 @@ async function generateFAQSection(params: {
   businessName: string
   phone: string
 }): Promise<string> {
+    const tradeLabel = getTradeLabel(params.trade)
   const price = getPriceRange(params.trade)
-  const tradeLabel = getTradeLabel(params.trade)
+  const seasonal = getSeasonalSuggestion(params.trade, new Date().getMonth())
 
   const faqs = [
     {
@@ -89,6 +90,7 @@ Business: ${params.businessName}
 Service performed: ${params.jobType}
 Trade: ${tradeLabel}
 City: ${params.city}, ${params.state}
+Seasonal context: ${seasonal}
 Phone: ${params.phone}
 Website: ${params.website}
 ${params.problemDescription ? `Actual job details from field: ${params.problemDescription}` : ''}
