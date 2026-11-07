@@ -1,14 +1,12 @@
 // ============================================
-// LEADERBOARD SCANNER
-// Pre-scores top 20 contractors per city+trade
-// Pulls from Google Places API, runs mini-audit
-// Saves to leaderboard_cache table
-// Run via: POST /api/leaderboard/scan
-// Cron: daily at 3am UTC
+// LEADERBOARD SCANNER — Free version
+// Replaced Google Places with Yelp Fusion
+// Yelp gives real review counts, ratings, names
+// 500 req/day free — enough for daily scans
 // ============================================
 
 import { supabaseAdmin } from '../supabase'
-import { generateWithFailover, safeParseJSON } from '../llm-failover'
+import { lookupBusinessOnYelp } from '../data-sources/yelp-lookup'
 
 export interface LeaderboardEntry {
   rank: number
@@ -17,7 +15,7 @@ export interface LeaderboardEntry {
   city: string
   trade: string
   score: number
-  claimed: boolean        // true if this business has a Geoom account
+  claimed: boolean
   claimedBusinessId?: string
   scoreBreakdown: {
     entity: number
@@ -30,17 +28,12 @@ export interface LeaderboardEntry {
   gbpUrl: string
 }
 
-// DYNAMIC — no hardcoded cities
-// Targets are pulled from your actual user base at scan time
-// Any city + trade a real user signed up with gets a leaderboard
-// Fallback seed list only used if DB has zero users yet (launch day)
 export const SEED_TARGETS: { city: string; trade: string }[] = [
   { city: 'Houston', trade: 'plumber' },
   { city: 'Phoenix', trade: 'plumber' },
   { city: 'Dallas', trade: 'hvac' },
 ]
 
-// Pull all unique city+trade combos from real users in DB
 async function getDynamicTargets(): Promise<{ city: string; trade: string }[]> {
   const { data, error } = await supabaseAdmin
     .from('businesses')
@@ -48,11 +41,8 @@ async function getDynamicTargets(): Promise<{ city: string; trade: string }[]> {
     .not('city', 'is', null)
     .not('trade', 'is', null)
 
-  if (error || !data || data.length === 0) {
-    return SEED_TARGETS
-  }
+  if (error || !data || data.length === 0) return SEED_TARGETS
 
-  // Deduplicate city+trade combos
   const seen = new Set<string>()
   const targets: { city: string; trade: string }[] = []
 
@@ -67,173 +57,160 @@ async function getDynamicTargets(): Promise<{ city: string; trade: string }[]> {
   return targets.length > 0 ? targets : SEED_TARGETS
 }
 
-// ---- Quick score for a Google Places result ----
-// Not a full audit — fast approximation for leaderboard ranking
-function quickScore(place: GooglePlaceResult): {
-  score: number
-  entity: number
-  citations: number
-  reviews: number
-} {
-  let entity = 0
-  let citations = 0
-  let reviews = 0
-
-  // Entity: GBP presence (they're in Places so GBP exists = 7pts base)
-  entity += 7
-  if (place.website) entity += 4        // has website
-  if (place.formatted_phone_number) entity += 4  // phone listed
-
-  // Citations: approximate from rating count (proxy for directory spread)
-  // More reviews = more directory presence over time
-  const rc = place.user_ratings_total || 0
-  if (rc >= 100) citations += 16
-  else if (rc >= 50) citations += 12
-  else if (rc >= 20) citations += 8
-  else if (rc >= 5) citations += 4
-  else citations += 1
-
-  // Reviews: rating + velocity proxy
-  const rating = place.rating || 0
-  if (rating >= 4.8) reviews += 15
-  else if (rating >= 4.5) reviews += 12
-  else if (rating >= 4.0) reviews += 8
-  else if (rating >= 3.5) reviews += 4
-  else reviews += 1
-
-  // Cap each bucket at max
+function quickScoreFromYelp(params: {
+  reviewCount: number
+  rating: number
+  hasWebsite: boolean
+  phone: string
+}): { score: number; entity: number; citations: number; reviews: number } {
+  // Entity: Yelp listing = they have some online presence
+  let entity = 7 // base for being found on Yelp
+  if (params.hasWebsite) entity += 4
+  if (params.phone) entity += 2
   entity = Math.min(entity, 15)
+
+  // Citations: proxy from review count (more reviews = more directory spread)
+  let citations = 0
+  const rc = params.reviewCount
+  if (rc >= 100) citations = 16
+  else if (rc >= 50) citations = 12
+  else if (rc >= 20) citations = 8
+  else if (rc >= 5) citations = 4
+  else citations = 1
   citations = Math.min(citations, 20)
+
+  // Reviews: rating + volume
+  let reviews = 0
+  const rating = params.rating
+  if (rating >= 4.8) reviews = 13
+  else if (rating >= 4.5) reviews = 11
+  else if (rating >= 4.0) reviews = 8
+  else if (rating >= 3.5) reviews = 4
+  else reviews = 1
   reviews = Math.min(reviews, 15)
 
-  // Content + schema + freshness: can't determine from Places API alone
-  // Give a baseline of 30% of remaining 50pts based on overall signals
-  const baselineOther = Math.round(((entity + citations + reviews) / 50) * 30)
-
+  const baselineOther = Math.round(((entity + citations + reviews) / 50) * 25)
   const score = Math.min(100, entity + citations + reviews + baselineOther)
 
   return { score, entity, citations, reviews }
 }
 
-interface GooglePlaceResult {
-  place_id: string
-  name: string
-  rating?: number
-  user_ratings_total?: number
-  website?: string
-  formatted_phone_number?: string
-  formatted_address?: string
-  url?: string
-}
-
-interface GooglePlacesSearchResponse {
-  results: GooglePlaceResult[]
-  status: string
-}
-
-interface GooglePlaceDetailResponse {
-  result: GooglePlaceResult
-  status: string
-}
-
-// ---- Fetch top contractors from Google Places ----
-async function fetchTopContractors(
+async function fetchTopContractorsFromYelp(
   city: string,
   trade: string
-): Promise<GooglePlaceResult[]> {
-  const apiKey = process.env.GOOGLE_PLACES_API_KEY
-  if (!apiKey) {
-    console.warn('GOOGLE_PLACES_API_KEY not set — leaderboard scanner skipped')
+): Promise<Array<{
+  id: string
+  name: string
+  rating: number
+  reviewCount: number
+  phone: string
+  website: string
+  url: string
+}>> {
+  const key = process.env.YELP_API_KEY
+  if (!key) {
+    console.warn('YELP_API_KEY not set — leaderboard scanner skipped')
     return []
   }
 
-  const query = encodeURIComponent(`${trade} contractor ${city}`)
-  const searchUrl = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${query}&key=${apiKey}`
+  try {
+    const term = encodeURIComponent(`${trade} contractor`)
+    const location = encodeURIComponent(`${city}`)
+    const res = await fetch(
+      `https://api.yelp.com/v3/businesses/search?term=${term}&location=${location}&limit=20&sort_by=review_count`,
+      {
+        headers: {
+          Authorization: `Bearer ${key}`,
+          Accept: 'application/json'
+        },
+        signal: AbortSignal.timeout(10000)
+      }
+    )
 
-  const searchRes = await fetch(searchUrl)
-  if (!searchRes.ok) return []
+    if (!res.ok) return []
 
-  const searchData = await searchRes.json() as GooglePlacesSearchResponse
-  if (searchData.status !== 'OK') return []
+    const data = await res.json() as {
+      businesses: Array<{
+        id: string
+        name: string
+        rating: number
+        review_count: number
+        phone: string
+        url: string
+        categories: Array<{ alias: string }>
+      }>
+    }
 
-  // Get details for top 20 results
-  const top20 = searchData.results.slice(0, 20)
-
-  const detailed = await Promise.allSettled(
-    top20.map(async (place) => {
-      const detailUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=place_id,name,rating,user_ratings_total,website,formatted_phone_number,formatted_address,url&key=${apiKey}`
-      const detailRes = await fetch(detailUrl)
-      if (!detailRes.ok) return place
-      const detailData = await detailRes.json() as GooglePlaceDetailResponse
-      return detailData.status === 'OK' ? detailData.result : place
-    })
-  )
-
-  return detailed
-    .filter((r): r is PromiseFulfilledResult<GooglePlaceResult> => r.status === 'fulfilled')
-    .map(r => r.value)
+    return (data.businesses || []).map(b => ({
+      id: b.id,
+      name: b.name,
+      rating: b.rating || 0,
+      reviewCount: b.review_count || 0,
+      phone: b.phone || '',
+      website: '',
+      url: b.url || ''
+    }))
+  } catch {
+    return []
+  }
 }
 
-// ---- Check which places have claimed Geoom accounts ----
-async function checkClaimed(
-  placeIds: string[]
-): Promise<Record<string, string>> {
-  // Returns map of placeId → businessId for claimed businesses
+async function checkClaimed(yelpIds: string[]): Promise<Record<string, string>> {
   const { data } = await supabaseAdmin
     .from('businesses')
-    .select('id, google_place_id')
-    .in('google_place_id', placeIds)
+    .select('id, yelp_id')
+    .in('yelp_id', yelpIds)
 
   const result: Record<string, string> = {}
   for (const row of data || []) {
-    if (row.google_place_id) {
-      result[row.google_place_id] = row.id
-    }
+    if (row.yelp_id) result[row.yelp_id] = row.id
   }
   return result
 }
 
-// ---- Main scanner function ----
 export async function scanLeaderboard(
   city: string,
   trade: string
 ): Promise<{ inserted: number; error?: string }> {
   try {
-    const places = await fetchTopContractors(city, trade)
+    const businesses = await fetchTopContractorsFromYelp(city, trade)
 
-    if (places.length === 0) {
-      return { inserted: 0, error: 'No results from Google Places' }
+    if (businesses.length === 0) {
+      return { inserted: 0, error: 'No results from Yelp' }
     }
 
-    const placeIds = places.map(p => p.place_id).filter(Boolean)
-    const claimedMap = await checkClaimed(placeIds)
+    const yelpIds = businesses.map(b => b.id)
+    const claimedMap = await checkClaimed(yelpIds)
 
-    const entries: LeaderboardEntry[] = places.map((place, i) => {
-      const { score, entity, citations, reviews } = quickScore(place)
-      const claimed = Boolean(claimedMap[place.place_id])
+    const entries: LeaderboardEntry[] = businesses.map((biz, i) => {
+      const { score, entity, citations, reviews } = quickScoreFromYelp({
+        reviewCount: biz.reviewCount,
+        rating: biz.rating,
+        hasWebsite: false,
+        phone: biz.phone
+      })
+      const claimed = Boolean(claimedMap[biz.id])
 
       return {
         rank: i + 1,
-        businessName: place.name,
-        placeId: place.place_id,
+        businessName: biz.name,
+        placeId: biz.id,
         city,
         trade,
         score,
         claimed,
-        claimedBusinessId: claimedMap[place.place_id],
+        claimedBusinessId: claimedMap[biz.id],
         scoreBreakdown: { entity, citations, reviews },
-        reviewCount: place.user_ratings_total || 0,
-        rating: place.rating || 0,
-        website: place.website || null,
-        gbpUrl: place.url || `https://www.google.com/maps/search/${encodeURIComponent(place.name + ' ' + city)}`
+        reviewCount: biz.reviewCount,
+        rating: biz.rating,
+        website: biz.website || null,
+        gbpUrl: biz.url || `https://www.yelp.com/search?find_desc=${encodeURIComponent(biz.name)}&find_loc=${encodeURIComponent(city)}`
       }
     })
 
-    // Sort by score descending and re-rank
     entries.sort((a, b) => b.score - a.score)
     entries.forEach((e, i) => { e.rank = i + 1 })
 
-    // Upsert into leaderboard_cache
     const rows = entries.map(e => ({
       place_id: e.placeId,
       city: e.city,
@@ -263,36 +240,26 @@ export async function scanLeaderboard(
     if (error) throw error
 
     return { inserted: rows.length }
-
   } catch (err) {
     console.error(`Leaderboard scan failed for ${trade} in ${city}:`, err)
     return { inserted: 0, error: String(err) }
   }
 }
 
-// ---- Scan all targets (called by cron) ----
-// Fully dynamic — scans every city+trade combo from real users
-// Works for contractors in any country, any city, any trade
 export async function scanAllTargets(): Promise<void> {
   const targets = await getDynamicTargets()
-
   console.log(`Starting leaderboard scan for ${targets.length} city+trade combos`)
 
   for (const target of targets) {
     const result = await scanLeaderboard(target.city, target.trade)
     console.log(`${target.trade} in ${target.city}: ${result.inserted} entries${result.error ? ' — ERROR: ' + result.error : ''}`)
-
-    // Polite delay between API calls — respect Google Places rate limits
     await new Promise(r => setTimeout(r, 1200))
   }
 
   console.log('Leaderboard scan complete')
 }
 
-// ---- Trigger scan for a single new user (call this at onboarding) ----
-// When someone signs up in Melbourne or Mumbai — leaderboard builds for them immediately
 export async function scanForNewUser(city: string, trade: string): Promise<void> {
-  // Only scan if we don't already have recent data for this combo
   const { data: existing } = await supabaseAdmin
     .from('leaderboard_cache')
     .select('scanned_at')
@@ -307,12 +274,10 @@ export async function scanForNewUser(city: string, trade: string): Promise<void>
     ? (Date.now() - lastScan.getTime()) / (1000 * 60 * 60)
     : 999
 
-  // Only rescan if data is older than 24 hours
   if (hoursSinceLastScan < 24) {
     console.log(`Leaderboard for ${trade} in ${city} is fresh — skipping scan`)
     return
   }
 
   await scanLeaderboard(city, trade)
-  console.log(`Leaderboard built for ${trade} in ${city}`)
 }
