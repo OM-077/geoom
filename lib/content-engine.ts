@@ -73,9 +73,9 @@ export async function generateJobPage(params: {
   slug: string
   content: string
 }> {
-  const tradeLabel = getTradeLabel(params.trade)
+    const tradeLabel = getTradeLabel(params.trade)
   const price = getPriceRange(params.trade)
-
+  const seasonal = getSeasonalSuggestion(params.trade, new Date().getMonth())
   // ============================================
   // EVIDENCE-FIRST PROMPT
   // Council finding: AI cites pages that PROVE
