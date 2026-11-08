@@ -158,16 +158,11 @@ export async function sendMondayEmail(businessId: string): Promise<{
 <tr><td height="16"></td></tr>
 
 ${journeyThisWeek && journeyThisWeek.length > 0 ? journeyThisWeek.map(e =>
-  `<tr><td style="background:#11151C;border:1px solid #222A35;padding:12px 20px;">
-  <p style="margin:0;color:#F0F4F8;font-size:13px;line-height:1.5;">
-    <span style="color:#00E676;font-weight:700;">+${e.points_gained}pts</span> — ${e.description}
-  </p></td></tr>`
+  '<tr><td style="background:#11151C;border:1px solid #222A35;padding:12px 20px;"><p style="margin:0;color:#F0F4F8;font-size:13px;line-height:1.5;"><span style="color:#00E676;font-weight:700;">+' + e.points_gained + 'pts</span> — ' + e.description + '</p></td></tr>'
 ).join('') : ''}
 <tr><td height="8"></td></tr>
-  <p style="margin:0;color:#00E676;font-size:13px;font-weight:600;">${pendingCount} review request${pendingCount > 1 ? 's' : ''} ready to send</p>
-  <p style="margin:4px 0 0;color:#8A9BB0;font-size:12px;">Open your dashboard to copy and send them — takes 30 seconds each.</p>
-</td></tr>
-<tr><td height="16"></td></tr>` : ''}
+
+${pendingCount > 0 ? '<tr><td style="background:rgba(0,230,118,0.08);border:1px solid #00E676;padding:16px;"><p style="margin:0;color:#00E676;font-size:13px;font-weight:600;">' + pendingCount + ' review request' + (pendingCount > 1 ? 's' : '') + ' ready to send</p><p style="margin:4px 0 0;color:#8A9BB0;font-size:12px;">Open your dashboard to copy and send them — takes 30 seconds each.</p></td></tr><tr><td height="16"></td></tr>' : ''}
 
 <tr><td style="text-align:center;padding:8px 0 24px;">
   <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" style="display:inline-block;background:#FF7A00;color:#07090C;padding:14px 32px;text-decoration:none;font-size:14px;font-weight:700;">View Full Dashboard →</a>
