@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 import { scoreColor, estimatedCalls, ctaText } from '@/lib/utils'
 

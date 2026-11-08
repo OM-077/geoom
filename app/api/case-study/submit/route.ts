@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 // ============================================
 // CASE STUDY SUBMISSION
 // Contractor submits their before/after score story

@@ -1,3 +1,5 @@
+'use client'
+
 export default function QuickStats() {
   const nextMon = getNextMonday()
   const daysAway = Math.ceil((nextMon.getTime() - Date.now()) / 86400000)

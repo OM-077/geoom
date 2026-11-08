@@ -1,3 +1,5 @@
+'use client'
+
 import { estimatedCalls, scoreColor } from '@/lib/utils'
 
 interface Props { score: number; city: string; trade: string }

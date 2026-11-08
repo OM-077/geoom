@@ -1,3 +1,5 @@
+'use client'
+
 import { scoreColor } from '@/lib/utils'
 
 type Status = 'done' | 'missed' | 'pending' | 'empty'

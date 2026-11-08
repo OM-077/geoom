@@ -1,3 +1,4 @@
+'use client'
 
 import { scoreColor } from '@/lib/utils'
 

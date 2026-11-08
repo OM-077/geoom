@@ -1,3 +1,5 @@
+'use client'
+
 import Link from 'next/link'
 
 interface Platform { name: string; status: 'indexed' | 'partial' | 'not_indexed'; detail: string; fix?: string }

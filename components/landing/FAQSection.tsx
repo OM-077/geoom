@@ -1,3 +1,5 @@
+'use client'
+
 const faqs = [
   {
     q: 'Does this work for HVAC, plumbing, electrical, and roofing?',

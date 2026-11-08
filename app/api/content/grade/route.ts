@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 // ============================================
 // CONTENT GRADER API ROUTE
 // AI grades a contractor's page content for GEO quality
