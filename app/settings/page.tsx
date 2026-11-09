@@ -106,7 +106,7 @@ const NOTIFICATION_ROWS: {
 ];
 
 const PLAN_BADGE: Record<Plan, string> = {
-  core: "CORE · $79/mo",
+  
   pro: "GEOOM · $97/mo",
   founding: "FOUNDING · $499/yr",
 };
@@ -433,7 +433,7 @@ export default function SettingsPage() {
             )}
           </div>
 
-          {plan === "core" && (
+          
             <div className="mt-5 rounded-lg border border-neutral-200 bg-neutral-50 p-5">
               <p className="text-sm font-semibold">Pro includes</p>
               <ul className="mt-3 space-y-2 text-sm text-neutral-700">

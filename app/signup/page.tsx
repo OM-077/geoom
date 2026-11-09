@@ -28,7 +28,7 @@ export default function SignupPage() {
   const [error, setError] = useState('')
 
   const planLabels: Record<string, string> = {
-    core: 'Core — $79/mo',
+    
     pro: 'Geoom — $97/mo',
     founding: 'Founding — $499/yr'
   }
