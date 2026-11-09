@@ -30,7 +30,7 @@ export default function AttributionPanel({ isPro, estimatedCalls }: Props) {
           <span className="text-xs font-semibold uppercase tracking-[1px]" style={{ color: 'var(--kinpaku-gold)' }}>Pro feature</span>
           <span className="text-sm text-center max-w-[220px]" style={{ color: 'var(--text-muted)' }}>See whether AI visibility is driving real calls and reviews</span>
           <Link href="/signup?plan=pro" className="px-5 py-2.5 rounded text-sm font-semibold" style={{ background: 'var(--kinpaku-gold)', color: 'var(--lacquer-black)', textDecoration: 'none' }}>
-            Upgrade to Pro — $149/mo
+            Upgrade to Geoom — $97/mo
           </Link>
         </div>
       )}

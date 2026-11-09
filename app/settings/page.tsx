@@ -23,7 +23,7 @@ const ui = {
 };
 
 /* ------------------------------ Types ------------------------------ */
-type Plan = "core" | "pro" | "founding";
+type Plan = "pro" | "founding";
 
 interface BusinessInfo {
   name: string;
@@ -107,8 +107,8 @@ const NOTIFICATION_ROWS: {
 
 const PLAN_BADGE: Record<Plan, string> = {
   core: "CORE · $79/mo",
-  pro: "PRO · $149/mo",
-  founding: "FOUNDING · $599 locked",
+  pro: "GEOOM · $97/mo",
+  founding: "FOUNDING · $499/yr",
 };
 
 /* ------------------------------ Page ------------------------------- */
@@ -124,7 +124,7 @@ export default function SettingsPage() {
   const [notifications, setNotifications] =
     useState<NotificationPrefs>(DEFAULT_NOTIFICATIONS);
 
-  const [plan, setPlan] = useState<Plan>("core");
+  const [plan, setPlan] = useState<Plan>("pro");
 
   const [showPauseModal, setShowPauseModal] = useState(false);
   const [pausing, setPausing] = useState(false);
@@ -461,7 +461,7 @@ export default function SettingsPage() {
               </ul>
 
               <Link href="/billing/upgrade" className={`${ui.btnPrimary} mt-5 w-full sm:w-auto`}>
-                Upgrade to Pro — $149/mo →
+                Upgrade to Geoom — $97/mo →
               </Link>
               <p className="mt-3 text-xs text-neutral-500">
                 Upgrade activates on your next billing date

@@ -2,33 +2,26 @@ import { supabaseAdmin } from './supabase'
 
 // ============================================
 // PRICING ENGINE
-// Core $79/month — audit + score + fix plan
-// Pro $149/month — full product, all engines
-// Founding Member $599/year — 35 spots only
-//   after 35 spots → price becomes $149/month
-// No Agency tier
+// One plan: $97/month — full product, everything
+// Founding Member: $499/year — 35 spots only
+//   saves $665 vs monthly
+//   after year ends → switches to $97/month
+// No tiers, no feature gates — everyone gets all
 // ============================================
 
 export const PRICING = {
-  core: {
-    amount: 79,
-    interval: 'month' as const,
-    label: 'Core',
-    description: 'Audit, score, weekly fix plan — everything to get started',
-    priceId: process.env.DODO_CORE_PRICE_ID
-  },
   pro: {
-    amount: 149,
+    amount: 97,
     interval: 'month' as const,
-    label: 'Pro',
-    description: 'Full product — content engine, pipelines, copilot, all features',
+    label: 'Geoom',
+    description: 'Full product — every engine, every feature, cancel anytime',
     priceId: process.env.DODO_PRO_PRICE_ID
   },
   founding: {
-    amount: 599,
+    amount: 499,
     interval: 'year' as const,
     label: 'Founding Member',
-    description: '12 months full Pro access — saves $1,189 vs monthly — 35 spots only',
+    description: '12 months full access — saves $665 vs monthly — 35 spots only',
     spotsTotal: 35,
     monthsAccess: 12,
     priceId: process.env.DODO_FOUNDING_PRICE_ID

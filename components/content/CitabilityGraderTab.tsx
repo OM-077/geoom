@@ -53,7 +53,7 @@ export default function CitabilityGraderTab() {
           <span className="text-xs font-semibold uppercase tracking-[1px]" style={{ color: 'var(--kinpaku-gold)' }}>Pro feature</span>
           <span className="text-sm text-center max-w-[240px]" style={{ color: 'var(--text-muted)' }}>Find out which parts of your website AI can actually quote — and get a rewrite if it can&apos;t.</span>
           <Link href="/signup?plan=pro" className="px-5 py-2.5 rounded text-sm font-semibold" style={{ background: 'var(--kinpaku-gold)', color: 'var(--lacquer-black)', textDecoration: 'none' }}>
-            Upgrade to Pro — $149/mo
+            Upgrade to Geoom — $97/mo
           </Link>
         </div>
       </div>

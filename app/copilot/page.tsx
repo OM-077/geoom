@@ -21,7 +21,7 @@ interface Business {
   name: string;
   score: number;
   weakestBucket: string;
-  pricing_tier: "core" | "pro" | "founding";
+  pricing_tier: "pro" | "founding";
 }
 
 // ── Mock business data (replace with real fetch) ───────────────────────────────

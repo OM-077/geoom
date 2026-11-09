@@ -29,8 +29,8 @@ export default function SignupPage() {
 
   const planLabels: Record<string, string> = {
     core: 'Core — $79/mo',
-    pro: 'Pro — $149/mo',
-    founding: 'Founding — $599 locked'
+    pro: 'Geoom — $97/mo',
+    founding: 'Founding — $499/yr'
   }
 
   async function handleGoogleSignup() {
