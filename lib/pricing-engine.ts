@@ -2,34 +2,34 @@ import { supabaseAdmin } from './supabase'
 
 // ============================================
 // PRICING ENGINE
-// Pro $149/month — full product, no gates
-// Agency $349/month — unlimited locations
-// Founding Member $599/year — 30 spots
-// No Starter tier — prevents churn from
-// under-featured plan disappointment
+// Core $79/month — audit + score + fix plan
+// Pro $149/month — full product, all engines
+// Founding Member $599/year — 35 spots only
+//   after 35 spots → price becomes $149/month
+// No Agency tier
 // ============================================
 
 export const PRICING = {
+  core: {
+    amount: 79,
+    interval: 'month' as const,
+    label: 'Core',
+    description: 'Audit, score, weekly fix plan — everything to get started',
+    priceId: process.env.DODO_CORE_PRICE_ID
+  },
   pro: {
     amount: 149,
     interval: 'month' as const,
     label: 'Pro',
-    description: 'Full product — all features — cancel anytime',
+    description: 'Full product — content engine, pipelines, copilot, all features',
     priceId: process.env.DODO_PRO_PRICE_ID
-  },
-  agency: {
-    amount: 349,
-    interval: 'month' as const,
-    label: 'Agency',
-    description: 'Everything in Pro + unlimited locations + white-label',
-    priceId: process.env.DODO_AGENCY_PRICE_ID
   },
   founding: {
     amount: 599,
     interval: 'year' as const,
     label: 'Founding Member',
-    description: '12 months full access — saves $1,189 vs monthly',
-    spotsTotal: 30,
+    description: '12 months full Pro access — saves $1,189 vs monthly — 35 spots only',
+    spotsTotal: 35,
     monthsAccess: 12,
     priceId: process.env.DODO_FOUNDING_PRICE_ID
   }
@@ -143,7 +143,7 @@ export async function activateSubscription(params: {
   if (params.tier === 'founding') {
     updates.founding_member = true
     const expiry = new Date()
-    expiry.setMonth(expiry.getMonth() + 12)
+    expiry.setFullYear(expiry.getFullYear() + 1)
     updates.subscription_expires_at = expiry.toISOString()
   }
 
