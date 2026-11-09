@@ -467,7 +467,7 @@ export default function SettingsPage() {
                 Upgrade activates on your next billing date
               </p>
             </div>
-          )}
+       
         </section>
 
         {/* ---------------- DANGER ZONE ---------------- */}
