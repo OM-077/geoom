@@ -1,3 +1,4 @@
+'use client'
 
 import Sidebar from '@/components/shared/Sidebar'
 import AlertBanner from '@/components/dashboard/AlertBanner'

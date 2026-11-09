@@ -1,3 +1,4 @@
+'use client'
 import OnboardingFlow from '@/components/onboarding/OnboardingFlow'
 import Link from 'next/link'
 
