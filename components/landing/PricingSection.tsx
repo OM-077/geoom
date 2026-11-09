@@ -3,26 +3,26 @@
 import Link from 'next/link'
 
 const coreFeatures = [
-  'Geoom Score, updated every week',
-  'See exactly what\'s broken (6 signal buckets)',
-  'Platform Authority Score (Yelp, Foursquare, Angi + 5 more)',
-  '12-week Fix Program, step by step',
-  'FAQ Generator + llms.txt file',
-  'NAP Scanner + PDF for your office',
-  'Score alerts by email',
-  'Your rank on the City Leaderboard',
+  'Geoom Score — updated every week',
+  'See exactly what\'s broken across 6 signal buckets',
+  'Weekly Monday fix plan — 1 task, 10 minutes',
+  'NAP Scanner — check your name/address/phone on 8 platforms',
+  'FAQ Generator — instant AI-ready FAQ for your website',
+  'llms.txt file — tells every AI engine about your business',
+  'City Leaderboard — see your rank vs local competitors',
+  'Weekly score email every Monday',
 ]
 
 const proFeatures = [
-  'Everything in Core',
-  'Ask Geoom — your AI coach (chat)',
-  'Competitor Spy — watch 3 rivals\' scores over time',
-  'Chunk Citability Grader',
-  '30-day Progress Report (PDF)',
-  'Attribution Panel — "Is it working?" answered with data',
-  'Share Your Score (social card)',
-  'Score alerts by SMS',
-  'Google Business Profile insights sync',
+  'Everything in Core, plus:',
+  'Job-to-page engine — every completed job becomes a local SEO page automatically',
+  'Competitor Spy — track 3 rivals\' scores week by week',
+  'Ask Geoom — AI coach answers any visibility question',
+  'Citability Grader — paste any page, get AI-readiness score',
+  'Attribution Panel — proves which fixes drove more calls',
+  'Pipeline connect — Jobber, HouseCall Pro, Workiz, ServiceM8',
+  'GBP sync — Google Business Profile insights in one place',
+  'Share Your Score — social card to post on Instagram/Facebook',
 ]
 
 export default function PricingSection() {
@@ -44,7 +44,7 @@ export default function PricingSection() {
               <span className="font-barlow font-bold" style={{ fontSize: '56px', color: 'var(--champagne)', lineHeight: 1 }}>$79</span>
               <span className="text-lg ml-1" style={{ color: 'var(--text-muted)' }}>/month</span>
             </div>
-            <p className="text-[15px] mb-6" style={{ color: 'var(--text-muted)' }}>Fix your AI visibility yourself</p>
+            <p className="text-[15px] mb-6" style={{ color: 'var(--text-muted)' }}>Know exactly what to fix. Do it in 10 min/week.</p>
             <hr className="mb-6" style={{ border: 'none', borderTop: '1px solid var(--border-subtle)' }} />
             <ul className="mb-6 space-y-1">
               {coreFeatures.map((f) => (
@@ -68,7 +68,7 @@ export default function PricingSection() {
               <span className="font-barlow font-bold" style={{ fontSize: '56px', color: 'var(--champagne)', lineHeight: 1 }}>$149</span>
               <span className="text-lg ml-1" style={{ color: 'var(--text-muted)' }}>/month</span>
             </div>
-            <p className="text-[15px] mb-6" style={{ color: 'var(--text-muted)' }}>Beat your competitors, prove it&apos;s working</p>
+            <p className="text-[15px] mb-6" style={{ color: 'var(--text-muted)' }}>Geoom does the work for you. Content, tracking, proof.</p>
             <hr className="mb-6" style={{ border: 'none', borderTop: '1px solid var(--border-subtle)' }} />
             <ul className="mb-6 space-y-1">
               {proFeatures.map((f) => (
