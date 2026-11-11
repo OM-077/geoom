@@ -433,41 +433,8 @@ export default function SettingsPage() {
             )}
           </div>
 
-          
-            <div className="mt-5 rounded-lg border border-neutral-200 bg-neutral-50 p-5">
-              <p className="text-sm font-semibold">Pro includes</p>
-              <ul className="mt-3 space-y-2 text-sm text-neutral-700">
-                {[
-                  "Ask Geoom AI Copilot",
-                  "Competitor deep analysis",
-                  "Priority score updates",
-                ].map((feature) => (
-                  <li key={feature} className="flex items-start gap-2">
-                    <svg
-                      aria-hidden="true"
-                      viewBox="0 0 20 20"
-                      className="mt-0.5 h-4 w-4 shrink-0 text-green-600"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M16.7 5.3a1 1 0 010 1.4l-7.5 7.5a1 1 0 01-1.4 0L3.3 9.7a1 1 0 011.4-1.4l3.8 3.8 6.8-6.8a1 1 0 011.4 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
 
-              <Link href="/billing/upgrade" className={`${ui.btnPrimary} mt-5 w-full sm:w-auto`}>
-                Upgrade to Geoom — $97/mo →
-              </Link>
-              <p className="mt-3 text-xs text-neutral-500">
-                Upgrade activates on your next billing date
-              </p>
-            </div>
-       
+
         </section>
 
         {/* ---------------- DANGER ZONE ---------------- */}
