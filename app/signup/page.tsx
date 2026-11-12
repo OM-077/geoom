@@ -17,9 +17,11 @@ export default function SignupPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const selectedPlan = searchParams.get('plan') || null
+  const selectedPlan = searchParams.get('plan') || 'pro'
   const refCity = searchParams.get('city') || null
   const refTrade = searchParams.get('trade') || null
+  const auditScore = searchParams.get('score') || null
+  const auditBusiness = searchParams.get('business') || null
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -33,13 +35,24 @@ export default function SignupPage() {
     founding: 'Founding — $499/yr'
   }
 
+  // After signup → go to checkout, not onboarding
+  // Onboarding happens after payment webhook fires
+  function checkoutNext() {
+    const params = new URLSearchParams()
+    params.set('plan', selectedPlan || 'pro')
+    if (auditScore) params.set('score', auditScore)
+    if (auditBusiness) params.set('business', auditBusiness)
+    return `/checkout?${params.toString()}`
+  }
+
   async function handleGoogleSignup() {
     setGoogleLoading(true)
     setError('')
+    const next = checkoutNext()
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=/onboarding${selectedPlan ? `&plan=${selectedPlan}` : ''}`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       }
     })
     if (error) {
@@ -53,11 +66,12 @@ export default function SignupPage() {
     setLoading(true)
     setError('')
 
+    const next = checkoutNext()
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding${selectedPlan ? `&plan=${selectedPlan}` : ''}`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
       }
     })
 
@@ -67,7 +81,6 @@ export default function SignupPage() {
       return
     }
 
-    // Email confirmation sent — redirect to confirm page
     router.push('/auth/confirm-email?email=' + encodeURIComponent(email))
   }
 
@@ -100,22 +113,25 @@ export default function SignupPage() {
 
       <div style={{ width: '100%', maxWidth: '400px' }}>
 
-        {/* Plan reminder */}
-        {selectedPlan && planLabels[selectedPlan] && (
+        {/* Audit score reminder — shown when coming from free audit */}
+        {auditScore && auditBusiness && (
           <div style={{
             background: 'oklch(0.12 0.015 260)',
-            border: '1px solid oklch(0.18 0.02 260)',
-            borderRadius: '6px',
-            padding: '10px 16px',
+            border: '1px solid oklch(0.22 0.12 60)',
+            borderRadius: '8px',
+            padding: '14px 20px',
             marginBottom: '24px',
-            textAlign: 'center',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px',
           }}>
-            <span style={{ color: 'oklch(0.55 0.02 260)', fontSize: '12px' }}>
-              Selected plan: {' '}
+            <span style={{ fontSize: '40px', fontWeight: 800, color: parseInt(auditScore) < 40 ? '#ef4444' : parseInt(auditScore) < 70 ? '#f59e0b' : '#22c55e', lineHeight: 1 }}>
+              {auditScore}
             </span>
-            <span style={{ color: '#FF7A00', fontSize: '12px', fontWeight: 700 }}>
-              {planLabels[selectedPlan]}
-            </span>
+            <div>
+              <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'oklch(0.94 0.01 260)' }}>{decodeURIComponent(auditBusiness)}</p>
+              <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'oklch(0.55 0.02 260)' }}>Your Geoom Score · Create account to fix it</p>
+            </div>
           </div>
         )}
 
@@ -136,7 +152,7 @@ export default function SignupPage() {
           textAlign: 'center',
           lineHeight: 1.5,
         }}>
-          Free audit included. No credit card until you pick a plan.
+          Account creation takes 30 seconds. Payment comes next.
         </p>
 
         {/* Google button */}

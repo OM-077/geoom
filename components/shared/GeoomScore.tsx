@@ -48,11 +48,11 @@ export default function GeoomScore({ score, businessName, showCTA = true, classN
         </p>
         {showCTA && (
           <Link
-            href={`/onboarding?score=${score}&business=${encodeURIComponent(businessName)}`}
-            className="text-sm font-semibold"
-            style={{ color: 'var(--kinpaku-gold)' }}
+            href={`/signup?score=${score}&business=${encodeURIComponent(businessName)}`}
+            className="inline-block px-5 py-2.5 rounded text-sm font-bold"
+            style={{ background: 'var(--kinpaku-gold)', color: 'var(--lacquer-black)' }}
           >
-            {cta}
+            Fix my score — $97/month →
           </Link>
         )}
       </div>
