@@ -19,6 +19,9 @@ export default function LandingPage() {
             <a href="#how-it-works" className="text-sm font-medium hidden md:block" style={{ color: 'var(--text-muted)' }}>How it works</a>
             <a href="#pricing" className="text-sm font-medium hidden md:block" style={{ color: 'var(--text-muted)' }}>Pricing</a>
             <Link href="/leaderboard" className="text-sm font-medium hidden md:block" style={{ color: 'var(--text-muted)' }}>Leaderboard</Link>
+            <Link href="/login" className="text-sm font-medium hidden md:block" style={{ color: 'var(--text-muted)' }}>
+              Log in
+            </Link>
             <a href="#hero" className="text-sm font-semibold px-4 py-2 rounded" style={{ color: 'var(--kinpaku-gold)', border: '1px solid var(--kinpaku-gold)' }}>
               Free audit →
             </a>

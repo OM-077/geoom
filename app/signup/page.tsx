@@ -7,7 +7,7 @@
 // After signup → /onboarding
 // ============================================
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -16,6 +16,13 @@ export default function SignupPage() {
   const supabase = createClientComponentClient()
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  // Already logged in → skip straight to checkout
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.replace('/checkout?' + searchParams.toString())
+    })
+  }, [])
 
   const selectedPlan = searchParams.get('plan') || 'pro'
   const refCity = searchParams.get('city') || null

@@ -7,7 +7,7 @@
 // After login → /dashboard (or /onboarding if no business)
 // ============================================
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -15,6 +15,13 @@ import Link from 'next/link'
 export default function LoginPage() {
   const supabase = createClientComponentClient()
   const router = useRouter()
+
+  // Already logged in → go straight to dashboard
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) router.replace('/dashboard')
+    })
+  }, [])
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
