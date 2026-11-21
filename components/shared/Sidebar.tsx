@@ -29,51 +29,72 @@ export default function Sidebar({
   ]
 
   return (
-    <aside className="fixed top-0 left-0 bottom-0 w-60 flex flex-col z-30" style={{ background: 'var(--raised-lacquer)', borderRight: '1px solid var(--border-subtle)' }}>
-      {/* Logo */}
-      <div className="px-6 pt-6 pb-4">
-        <Link href="/" className="font-barlow font-bold text-[22px] tracking-tight" style={{ color: 'var(--champagne)' }}>
-          geo<span style={{ color: 'var(--kinpaku-gold)' }}>om</span>
-        </Link>
-      </div>
+    <>
+      {/* Desktop sidebar — hidden on mobile */}
+      <aside className="hidden md:flex fixed top-0 left-0 bottom-0 w-60 flex-col z-30" style={{ background: 'var(--raised-lacquer)', borderRight: '1px solid var(--border-subtle)' }}>
+        {/* Logo */}
+        <div className="px-6 pt-6 pb-4">
+          <Link href="/" className="font-barlow font-bold text-[22px] tracking-tight" style={{ color: 'var(--champagne)' }}>
+            geo<span style={{ color: 'var(--kinpaku-gold)' }}>om</span>
+          </Link>
+        </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 overflow-y-auto">
+        {/* Nav */}
+        <nav className="flex-1 px-3 overflow-y-auto">
+          {navItems.map((item) => {
+            const isActive = active === item.key
+            return (
+              <Link
+                key={item.key}
+                href={item.href}
+                className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium transition-colors"
+                style={{
+                  color: isActive ? 'var(--champagne)' : 'var(--text-muted)',
+                  background: isActive ? 'var(--lacquer-black)' : 'transparent',
+                  borderLeft: isActive ? '2px solid var(--kinpaku-gold)' : '2px solid transparent',
+                  borderRadius: '0 4px 4px 0',
+                }}
+              >
+                <span style={{ color: isActive ? 'var(--kinpaku-gold)' : undefined, opacity: isActive ? 1 : 0.7 }}>
+                  {item.icon}
+                </span>
+                {item.label}
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* Account block */}
+        <div className="px-4 py-3.5" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+          <p className="text-sm font-semibold" style={{ color: 'var(--champagne)' }}>{businessName}</p>
+          <p className="text-xs mb-2.5" style={{ color: 'var(--text-muted)' }}>{trade} · {city}</p>
+          <div className="flex items-center justify-between">
+            <span className="font-barlow font-semibold text-base px-2 py-0.5 rounded" style={{ background: 'var(--lacquer-deep)', border: '1px solid var(--border-subtle)', color: scoreColor }}>
+              {score}
+            </span>
+            <Link href="/settings" className="text-sm" style={{ color: 'var(--text-muted)' }}>Settings →</Link>
+          </div>
+        </div>
+      </aside>
+
+      {/* Mobile bottom nav — shows on small screens only */}
+      <nav className="fixed bottom-0 left-0 right-0 md:hidden z-50 flex" style={{ background: 'var(--raised-lacquer)', borderTop: '1px solid var(--border-subtle)' }}>
         {navItems.map((item) => {
           const isActive = active === item.key
           return (
             <Link
               key={item.key}
               href={item.href}
-              className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium transition-colors"
-              style={{
-                color: isActive ? 'var(--champagne)' : 'var(--text-muted)',
-                background: isActive ? 'var(--lacquer-black)' : 'transparent',
-                borderLeft: isActive ? '2px solid var(--kinpaku-gold)' : '2px solid transparent',
-                borderRadius: '0 4px 4px 0',
-              }}
+              className="flex-1 flex flex-col items-center justify-center py-2 gap-0.5"
+              style={{ color: isActive ? 'var(--kinpaku-gold)' : 'var(--text-muted)', textDecoration: 'none' }}
             >
-              <span style={{ color: isActive ? 'var(--kinpaku-gold)' : undefined, opacity: isActive ? 1 : 0.7 }}>
-                {item.icon}
-              </span>
-              {item.label}
+              <span style={{ opacity: isActive ? 1 : 0.6 }}>{item.icon}</span>
+              <span style={{ fontSize: '9px', fontWeight: isActive ? 700 : 500 }}>{item.label}</span>
             </Link>
           )
         })}
       </nav>
-
-      {/* Account block */}
-      <div className="px-4 py-3.5" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-        <p className="text-sm font-semibold" style={{ color: 'var(--champagne)' }}>{businessName}</p>
-        <p className="text-xs mb-2.5" style={{ color: 'var(--text-muted)' }}>{trade} · {city}</p>
-        <div className="flex items-center justify-between">
-          <span className="font-barlow font-semibold text-base px-2 py-0.5 rounded" style={{ background: 'var(--lacquer-deep)', border: '1px solid var(--border-subtle)', color: scoreColor }}>
-            {score}
-          </span>
-          <Link href="/settings" className="text-sm" style={{ color: 'var(--text-muted)' }}>Settings →</Link>
-        </div>
-      </div>
-    </aside>
+    </>
   )
 }
 

@@ -4,11 +4,13 @@ import ScoreBreakdownTab from './ScoreBreakdownTab'
 import PlatformsTab from './PlatformsTab'
 import ListingsTab from './ListingsTab'
 import ChangelogTab from './ChangelogTab'
+import SchemaTab from './SchemaTab'
 
 const TABS = [
   { key: 'breakdown', label: 'Score Breakdown' },
   { key: 'platforms', label: 'Platforms' },
   { key: 'listings',  label: 'Listings (NAP)' },
+  { key: 'schema',    label: 'Schema Code' },
   { key: 'changelog', label: 'What Changed' },
 ]
 
@@ -51,6 +53,7 @@ export default function SignalsTabs() {
         {active === 'breakdown' && <ScoreBreakdownTab />}
         {active === 'platforms' && <PlatformsTab />}
         {active === 'listings'  && <ListingsTab />}
+        {active === 'schema'    && <SchemaTab />}
         {active === 'changelog' && <ChangelogTab />}
       </div>
     </div>

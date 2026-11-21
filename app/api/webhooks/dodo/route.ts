@@ -59,6 +59,13 @@ export async function POST(req: NextRequest) {
           subscriptionId: payload.data?.subscription_id
         })
 
+        // Fire audit in background — don't await, don't block webhook response
+        fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/audit/run`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-internal-key': process.env.INTERNAL_API_KEY || '' },
+          body: JSON.stringify({ businessId, source: 'post_payment' })
+        }).catch(err => console.error('Background audit trigger failed:', err))
+
         // Generate referral code and driver token for new subscribers
         const { data: business } = await supabaseAdmin
           .from('businesses')

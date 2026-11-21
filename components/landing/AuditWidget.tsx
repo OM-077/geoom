@@ -29,7 +29,7 @@ export default function AuditWidget({ id, prefillResult }: AuditWidgetProps) {
     <div>
       {/* Input row */}
       <div
-        className="flex gap-2 rounded-md p-1.5 transition-colors"
+        className="flex flex-col sm:flex-row gap-2 rounded-md p-1.5 transition-colors"
         style={{
           background: 'var(--lacquer-deep)',
           border: '1px solid var(--border-subtle)',

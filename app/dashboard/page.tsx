@@ -56,11 +56,23 @@ export default function DashboardPage() {
     <div className="flex min-h-screen" style={{ background: 'var(--lacquer-black)' }}>
       <Sidebar active="dashboard" businessName={d.businessName} trade={d.trade} city={d.city} score={d.score} />
 
-      <main className="ml-60 flex-1 px-8 py-6 pb-16 max-w-[calc(100%-240px)]">
+      <main className="md:ml-60 flex-1 px-4 md:px-8 py-6 pb-20 md:pb-16 max-w-full md:max-w-[calc(100%-240px)]">
         <AlertBanner />
 
+        {/* TODAY'S ACTION — single priority task */}
+        <div className="mb-5 rounded-lg p-5 flex items-center justify-between gap-4" style={{ background: 'var(--raised-lacquer)', borderLeft: '3px solid var(--kinpaku-gold)', border: '1px solid var(--kinpaku-gold)' }}>
+          <div className="min-w-0">
+            <p className="text-xs font-medium uppercase tracking-widest mb-1" style={{ color: 'var(--kinpaku-gold)' }}>Today&apos;s action — {d.currentAction.timeEstimate}</p>
+            <p className="text-lg font-bold mb-0.5 truncate" style={{ color: 'var(--champagne)' }}>{d.currentAction.title}</p>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{d.currentAction.difficulty} · +8 pts when done</p>
+          </div>
+          <a href="/driver" style={{ background: 'var(--kinpaku-gold)', color: 'var(--lacquer-black)', padding: '10px 20px', borderRadius: '6px', fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap', textDecoration: 'none', flexShrink: 0 }}>
+            Do this now →
+          </a>
+        </div>
+
         {/* Which AI can find you */}
-        <div className="grid grid-cols-3 gap-3 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
           {[
             { name: 'ChatGPT',          status: 'red'   as const, label: 'Not visible yet',     sub: 'Uses Foursquare + Yelp' },
             { name: 'Google AI & Gemini', status: 'amber' as const, label: 'Partially visible', sub: 'Triggers on 97% of local searches' },

@@ -15,8 +15,18 @@ interface ListingResult {
 const results: ListingResult[] = [
   {
     name: 'Foursquare', status: 'red',
-    issue: 'Listing unclaimed — data may be wrong',
-    action: 'Claim listing →', href: 'https://foursquare.com/add-place', special: true,
+    issue: 'Listing unclaimed — ChatGPT pulls from here, data may be wrong',
+    action: 'Claim listing →', href: 'https://business.foursquare.com/my-listings', special: true,
+  },
+  {
+    name: 'Yelp', status: 'red',
+    issue: 'Listing unclaimed — Siri & Apple Maps pull from Yelp reviews',
+    action: 'Claim listing →', href: 'https://biz.yelp.com/claim',
+  },
+  {
+    name: 'Apple Maps', status: 'red',
+    issue: 'Not claimed — Siri uses this for local results',
+    action: 'Claim listing →', href: 'https://businessconnect.apple.com',
   },
   {
     name: 'Google', status: 'green',
@@ -24,19 +34,9 @@ const results: ListingResult[] = [
     action: 'Good', href: '',
   },
   {
-    name: 'Yelp', status: 'amber',
-    issue: 'Phone number differs: (720) 555-0100 vs (720) 555-0101',
-    action: 'Fix →', href: 'https://biz.yelp.com',
-  },
-  {
     name: 'Bing Places', status: 'red',
     issue: 'Business not listed',
     action: 'Add listing →', href: 'https://www.bingplaces.com',
-  },
-  {
-    name: 'Apple Maps', status: 'amber',
-    issue: 'Address shows old ZIP code (80201 vs 80202)',
-    action: 'Fix →', href: 'https://businessconnect.apple.com',
   },
   {
     name: 'BBB', status: 'green',
@@ -174,20 +174,18 @@ export default function ListingsTab() {
             <span className="text-[13px] flex-1" style={{ color: issueColor(r.status) }}>
               {r.issue}
             </span>
-            {r.href ? (
-              <a
-                href={r.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-medium shrink-0"
-                style={{ color: 'var(--kinpaku-gold)', textDecoration: 'none' }}
-              >
+            {r.status === 'red' && r.action.includes('Claim') ? (
+              <a href={r.href} target="_blank" rel="noopener noreferrer"
+                style={{ display: 'inline-block', background: 'var(--kinpaku-gold)', color: 'var(--lacquer-black)', padding: '6px 14px', borderRadius: '4px', fontSize: '12px', fontWeight: 700, textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                {r.action}
+              </a>
+            ) : r.href ? (
+              <a href={r.href} target="_blank" rel="noopener noreferrer"
+                style={{ color: 'var(--verdigris)', fontSize: '13px', textDecoration: 'none', flexShrink: 0 }}>
                 {r.action}
               </a>
             ) : (
-              <span className="text-xs shrink-0" style={{ color: 'var(--text-dim)' }}>
-                {r.action}
-              </span>
+              <span style={{ color: 'var(--score-green)', fontSize: '13px', flexShrink: 0 }}>✓ {r.action}</span>
             )}
           </div>
         ))}

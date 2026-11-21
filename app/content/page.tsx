@@ -967,7 +967,7 @@ export default function ContentPage() {
       
 
       {/* Main content */}
-      <main style={{ flex: 1, minWidth: 0, padding: "32px 28px", overflowY: "auto" }}>
+      <main style={{ flex: 1, minWidth: 0, padding: "clamp(16px, 4vw, 32px) clamp(16px, 4vw, 28px)", overflowY: "auto", paddingBottom: 80 }}>
         {/* Page header */}
         <div
           style={{

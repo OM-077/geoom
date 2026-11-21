@@ -6,7 +6,7 @@ export default function SignalsPage() {
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--lacquer-black)' }}>
       <Sidebar active="signals" />
-      <main className="ml-60 flex-1 px-9 py-7 pb-16 max-w-[calc(100%-240px)]">
+      <main className="md:ml-60 flex-1 px-4 md:px-9 py-7 pb-20 md:pb-16 max-w-full md:max-w-[calc(100%-240px)]">
         <div className="max-w-[900px]">
           <nav className="text-sm mb-3.5" style={{ color: 'var(--text-dim)' }}>
             <a href="/dashboard" style={{ color: 'var(--text-dim)', textDecoration: 'none' }}>Dashboard</a>

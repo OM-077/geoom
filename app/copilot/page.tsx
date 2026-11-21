@@ -339,14 +339,14 @@ export default function AskGeoomPage() {
           display: "flex",
         }}
       >
-        {/* ── Sidebar nav */}
+        {/* ── Sidebar nav — hidden on mobile */}
         <nav
+          className="hidden md:flex"
           style={{
             width: 220,
             flexShrink: 0,
             borderRight: "1px solid rgba(255,255,255,0.07)",
             padding: "28px 16px",
-            display: "flex",
             flexDirection: "column",
             gap: 4,
           }}
@@ -599,6 +599,22 @@ export default function AskGeoomPage() {
           </div>
         </main>
       </div>
+
+      {/* Mobile bottom nav */}
+      <nav className="fixed bottom-0 left-0 right-0 md:hidden z-50 flex" style={{ background: '#0d0d10', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        {[
+          { href: '/dashboard', label: 'Dashboard', icon: '⊞' },
+          { href: '/driver', label: 'Fix Plan', icon: '⏱' },
+          { href: '/signals', label: 'Signals', icon: '📶' },
+          { href: '/copilot', label: 'Ask Geoom', icon: '💬' },
+          { href: '/competitors', label: 'Rivals', icon: '👥' },
+        ].map(item => (
+          <a key={item.href} href={item.href} className="flex-1 flex flex-col items-center justify-center py-3 gap-0.5 no-underline" style={{ color: item.href === '/copilot' ? '#f59e0b' : 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: item.href === '/copilot' ? 700 : 500 }}>
+            <span style={{ fontSize: 16 }}>{item.icon}</span>
+            {item.label}
+          </a>
+        ))}
+      </nav>
     </UpgradeGate>
   );
 }

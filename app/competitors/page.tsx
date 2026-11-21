@@ -224,7 +224,7 @@ export default function CompetitorsPage() {
     <div style={{ minHeight: "100vh", background: "#0d0d10", color: "#fff", fontFamily: "'Inter', system-ui, sans-serif", display: "flex" }}>
 
       {/* ── Sidebar nav */}
-      <nav style={{ width: 220, flexShrink: 0, borderRight: "1px solid rgba(255,255,255,0.07)", padding: "28px 16px", display: "flex", flexDirection: "column", gap: 4 }}>
+      <nav style={{ width: 220, flexShrink: 0, borderRight: "1px solid rgba(255,255,255,0.07)", padding: "28px 16px", display: "flex", flexDirection: "column", gap: 4 }} className="hidden md:flex">
         <div style={{ marginBottom: 28, paddingLeft: 8 }}>
           <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: "-0.02em", color: "#fff" }}>
             geo<span style={{ color: "#f59e0b" }}>om</span>
@@ -249,7 +249,7 @@ export default function CompetitorsPage() {
       </nav>
 
       {/* ── Main */}
-      <main style={{ flex: 1, overflowY: "auto", padding: "40px 36px", maxWidth: 900 }}>
+      <main style={{ flex: 1, overflowY: "auto", padding: "clamp(20px,4vw,40px) clamp(16px,4vw,36px)", maxWidth: 900, paddingBottom: 80 }}>
 
         {/* Page header */}
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28 }}>
@@ -544,6 +544,22 @@ export default function CompetitorsPage() {
         </div>
 
       </main>
+
+      {/* Mobile bottom nav */}
+      <nav className="fixed bottom-0 left-0 right-0 md:hidden z-50 flex" style={{ background: '#0d0d10', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        {[
+          { href: '/dashboard', label: 'Dashboard', icon: '⊞' },
+          { href: '/driver', label: 'Fix Plan', icon: '⏱' },
+          { href: '/signals', label: 'Signals', icon: '📶' },
+          { href: '/content', label: 'Content', icon: '📄' },
+          { href: '/competitors', label: 'Rivals', icon: '👥' },
+        ].map(item => (
+          <a key={item.href} href={item.href} className="flex-1 flex flex-col items-center justify-center py-3 gap-0.5 no-underline" style={{ color: item.href === '/competitors' ? '#f59e0b' : 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: item.href === '/competitors' ? 700 : 500 }}>
+            <span style={{ fontSize: 16 }}>{item.icon}</span>
+            {item.label}
+          </a>
+        ))}
+      </nav>
     </div>
   );
 }
