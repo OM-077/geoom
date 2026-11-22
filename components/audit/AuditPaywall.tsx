@@ -43,7 +43,7 @@ export default function AuditPaywall({ score, businessName, city }: AuditPaywall
       </div>
 
       <p className="text-[15px] mb-5" style={{ color: 'var(--text-muted)' }}>
-        Fix everything for $79/month. Cancel any time.
+        Fix everything for $97/month. Cancel any time.
       </p>
 
       <Link

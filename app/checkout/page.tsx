@@ -28,12 +28,12 @@ export default function CheckoutPage() {
       // Get their business record
       const { data: biz } = await supabase
         .from('businesses')
-        .select('id, name')
+        .select('id, business_name')
         .eq('user_id', user.id)
         .single()
 
       const businessId = biz?.id
-      const businessName = biz?.name || business || 'Your Business'
+      const businessName = biz?.business_name || business || 'Your Business'
 
       if (!businessId) {
         // No business yet — go to onboarding first, then come back
