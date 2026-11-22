@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 
 const features = [
@@ -18,6 +19,15 @@ const features = [
 ]
 
 export default function PricingSection() {
+  const [spotsLeft, setSpotsLeft] = useState<number | null>(null)
+
+  useEffect(() => {
+    fetch('/api/billing/checkout')
+      .then(r => r.json())
+      .then(d => { if (typeof d.remaining === 'number') setSpotsLeft(d.remaining) })
+      .catch(() => {})
+  }, [])
+
   return (
     <section id="pricing" className="py-24" style={{ background: 'var(--lacquer-deep)', borderTop: '1px solid var(--border-subtle)' }}>
       <div className="max-w-[1200px] mx-auto px-6">
@@ -56,7 +66,7 @@ export default function PricingSection() {
           {/* Founding */}
           <div className="rounded-lg p-8 flex flex-col" style={{ background: 'var(--raised-lacquer)', border: '1px solid var(--border-subtle)' }}>
             <span className="inline-block text-[11px] font-medium uppercase tracking-[1px] px-2 py-0.5 rounded-sm mb-5" style={{ color: 'var(--verdigris)', border: '1px solid var(--verdigris)' }}>
-              ⚡ 35 spots — Early access
+              ⚡ {spotsLeft !== null ? `${spotsLeft} spots left` : '35 spots'} — Early access
             </span>
             <div className="mb-1.5">
               <span className="font-barlow font-bold" style={{ fontSize: '64px', color: 'var(--champagne)', lineHeight: 1 }}>$499</span>
@@ -83,7 +93,9 @@ export default function PricingSection() {
             <Link href="/signup?plan=founding" className="block w-full text-center font-barlow font-bold text-lg py-4 rounded mt-auto" style={{ background: 'var(--raised-lacquer)', color: 'var(--champagne)', border: '1px solid var(--kinpaku-gold)' }}>
               Claim founding spot — $499/year →
             </Link>
-            <p className="text-xs text-center mt-2" style={{ color: 'var(--text-dim)' }}>35 spots total · {'{remaining}'} left</p>
+            <p className="text-xs text-center mt-2" style={{ color: 'var(--text-dim)' }}>
+              35 spots total · {spotsLeft !== null ? `${spotsLeft} left` : '35 left'}
+            </p>
           </div>
 
         </div>

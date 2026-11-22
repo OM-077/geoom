@@ -224,6 +224,21 @@ export default function LandingPage() {
           </p>
         </div>
       </section>
+
+      {/* FOOTER */}
+      <footer className="py-8" style={{ borderTop: '1px solid var(--border-subtle)', background: 'var(--lacquer-black)' }}>
+        <div className="max-w-[1200px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <span className="font-barlow font-bold text-lg" style={{ color: 'var(--champagne)' }}>
+            geo<span style={{ color: 'var(--kinpaku-gold)' }}>om</span>
+          </span>
+          <div className="flex items-center gap-6 text-sm" style={{ color: 'var(--text-dim)' }}>
+            <Link href="/privacy" style={{ color: 'var(--text-dim)', textDecoration: 'none' }}>Privacy Policy</Link>
+            <Link href="/terms" style={{ color: 'var(--text-dim)', textDecoration: 'none' }}>Terms of Service</Link>
+            <span>support@geoom.io</span>
+          </div>
+          <span className="text-xs" style={{ color: 'var(--text-dim)' }}>© 2026 Geoom</span>
+        </div>
+      </footer>
     </div>
   )
 }
