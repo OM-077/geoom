@@ -124,7 +124,25 @@ export default function OnboardingFlow() {
       count = Math.round(eased * target)
       setScanCount(count)
       if (progress < 1) requestAnimationFrame(tick)
-      else { setScanDone(true); setTimeout(() => router.push('/dashboard'), 2500) }
+      else {
+        setScanDone(true)
+        setTimeout(() => {
+          // After onboarding, go to checkout to complete payment
+          // Read saved plan from localStorage (set before Google OAuth)
+          try {
+            const saved = localStorage.getItem('geoom_auth_next')
+            if (saved && saved.includes('/checkout')) {
+              localStorage.removeItem('geoom_auth_next')
+              router.push(saved)
+            } else {
+              const plan = new URLSearchParams(window.location.search).get('plan') || 'pro'
+              router.push(`/checkout?plan=${plan}`)
+            }
+          } catch {
+            router.push('/checkout')
+          }
+        }, 2500)
+      }
     }
     requestAnimationFrame(tick)
   }
@@ -390,7 +408,7 @@ export default function OnboardingFlow() {
 
               <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>Your next action will be ready Monday morning. We&apos;ll email it to you at 8am.</p>
 
-              <a href="/dashboard" className="block w-full text-center font-barlow font-bold text-lg py-4 rounded"
+              <a href="/checkout" className="block w-full text-center font-barlow font-bold text-lg py-4 rounded"
                 style={{ background: 'var(--kinpaku-gold)', color: 'var(--lacquer-black)', textDecoration: 'none' }}>
                 Go to my dashboard →
               </a>
