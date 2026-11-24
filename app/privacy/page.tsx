@@ -5,7 +5,7 @@ export const metadata = { title: 'Privacy Policy — Geoom' }
 export default function PrivacyPage() {
   return (
     <div style={{ background: 'var(--lacquer-black)', minHeight: '100vh' }}>
-      <header style={{ borderBottom: '1px solid var(--border-subtle)' }} className="py-4 sticky top-0 z-50" style={{ background: 'var(--lacquer-black)', borderBottom: '1px solid var(--border-subtle)' }}>
+      <header className="py-4 sticky top-0 z-50" style={{ background: 'var(--lacquer-black)', borderBottom: '1px solid var(--border-subtle)' }}>
         <div className="max-w-[760px] mx-auto px-6 flex items-center justify-between">
           <Link href="/" className="font-barlow font-bold text-[22px] tracking-tight" style={{ color: 'var(--champagne)' }}>
             geo<span style={{ color: 'var(--kinpaku-gold)' }}>om</span>

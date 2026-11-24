@@ -17,11 +17,12 @@ export default function LoginPage() {
   const router = useRouter()
 
   // Already logged in → go straight to dashboard
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) router.replace('/dashboard')
     })
-  }, [])
+  }, []) // intentionally run once on mount
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

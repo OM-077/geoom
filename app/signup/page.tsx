@@ -11,11 +11,12 @@ export default function SignupPage() {
   const searchParams = useSearchParams()
 
   // Already logged in → skip straight to checkout
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) router.replace('/checkout?' + searchParams.toString())
     })
-  }, [])
+  }, []) // intentionally run once on mount
 
   const selectedPlan = searchParams.get('plan') || 'pro'
   const auditScore = searchParams.get('score') || null

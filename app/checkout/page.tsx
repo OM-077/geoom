@@ -16,6 +16,7 @@ export default function CheckoutPage() {
   const [status, setStatus] = useState<'loading' | 'redirecting' | 'error'>('loading')
   const [errorMsg, setErrorMsg] = useState('')
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     async function startCheckout() {
       // Get current user
