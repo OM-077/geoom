@@ -61,14 +61,14 @@ export default function LoginPage() {
     }
 
     if (data.session) {
-      // Check if onboarding complete
+      // Check if business row exists → they've completed onboarding
       const { data: business } = await supabase
         .from('businesses')
-        .select('id, onboarding_complete')
+        .select('id')
         .eq('user_id', data.session.user.id)
         .single()
 
-      if (!business || !business.onboarding_complete) {
+      if (!business) {
         router.push('/onboarding')
       } else {
         router.push('/dashboard')

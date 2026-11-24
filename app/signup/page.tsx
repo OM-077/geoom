@@ -1,12 +1,5 @@
 'use client'
 
-// ============================================
-// SIGNUP PAGE — app/signup/page.tsx
-// Google OAuth + Email/Password
-// Supabase Auth
-// After signup → /onboarding
-// ============================================
-
 import { useState, useEffect } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -25,8 +18,6 @@ export default function SignupPage() {
   }, [])
 
   const selectedPlan = searchParams.get('plan') || 'pro'
-  const refCity = searchParams.get('city') || null
-  const refTrade = searchParams.get('trade') || null
   const auditScore = searchParams.get('score') || null
   const auditBusiness = searchParams.get('business') || null
 
@@ -36,14 +27,6 @@ export default function SignupPage() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const planLabels: Record<string, string> = {
-    
-    pro: 'Geoom — $97/mo',
-    founding: 'Founding — $499/yr'
-  }
-
-  // After signup → go to checkout, not onboarding
-  // Onboarding happens after payment webhook fires
   function checkoutNext() {
     const params = new URLSearchParams()
     params.set('plan', selectedPlan || 'pro')
@@ -63,7 +46,7 @@ export default function SignupPage() {
       }
     })
     if (error) {
-      setError(error.message)
+      setError('Google sign-in failed. Try email below.')
       setGoogleLoading(false)
     }
   }
@@ -73,22 +56,29 @@ export default function SignupPage() {
     setLoading(true)
     setError('')
 
-    const next = checkoutNext()
-    const { error } = await supabase.auth.signUp({
+    // Sign up — no email confirmation required
+    // (disable email confirm in Supabase Auth settings → Email → Confirm email = OFF)
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
-      }
     })
 
-    if (error) {
-      setError(error.message)
+    if (signUpError) {
+      setError(signUpError.message)
       setLoading(false)
       return
     }
 
-    router.push('/auth/confirm-email?email=' + encodeURIComponent(email))
+    // If session exists immediately → email confirm is OFF → go to checkout
+    if (data.session) {
+      router.push(checkoutNext())
+      return
+    }
+
+    // If no session → Supabase sent a confirm email (email confirm is ON in dashboard)
+    // Show a helpful message instead of broken flow
+    setError('Check your email to confirm your account, then come back and log in.')
+    setLoading(false)
   }
 
   return (
@@ -104,7 +94,6 @@ export default function SignupPage() {
       padding: '24px 16px',
     }}>
 
-      {/* Logo */}
       <Link href="/" style={{ textDecoration: 'none' }}>
         <p style={{
           margin: '0 0 40px',
@@ -120,7 +109,7 @@ export default function SignupPage() {
 
       <div style={{ width: '100%', maxWidth: '400px' }}>
 
-        {/* Audit score reminder — shown when coming from free audit */}
+        {/* Audit score reminder */}
         {auditScore && auditBusiness && (
           <div style={{
             background: 'oklch(0.12 0.015 260)',
@@ -132,33 +121,27 @@ export default function SignupPage() {
             alignItems: 'center',
             gap: '16px',
           }}>
-            <span style={{ fontSize: '40px', fontWeight: 800, color: parseInt(auditScore) < 40 ? '#ef4444' : parseInt(auditScore) < 70 ? '#f59e0b' : '#22c55e', lineHeight: 1 }}>
+            <span style={{
+              fontSize: '40px', fontWeight: 800, lineHeight: 1,
+              color: parseInt(auditScore) < 40 ? '#ef4444' : parseInt(auditScore) < 70 ? '#f59e0b' : '#22c55e'
+            }}>
               {auditScore}
             </span>
             <div>
-              <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'oklch(0.94 0.01 260)' }}>{decodeURIComponent(auditBusiness)}</p>
-              <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'oklch(0.55 0.02 260)' }}>Your Geoom Score · Create account to fix it</p>
+              <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: 'oklch(0.94 0.01 260)' }}>
+                {decodeURIComponent(auditBusiness)}
+              </p>
+              <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'oklch(0.55 0.02 260)' }}>
+                Your Geoom Score · Create account to fix it
+              </p>
             </div>
           </div>
         )}
 
-        {/* Heading */}
-        <h1 style={{
-          margin: '0 0 8px',
-          fontSize: '26px',
-          fontWeight: 700,
-          color: 'oklch(0.94 0.01 260)',
-          textAlign: 'center',
-        }}>
+        <h1 style={{ margin: '0 0 8px', fontSize: '26px', fontWeight: 700, color: 'oklch(0.94 0.01 260)', textAlign: 'center' }}>
           Create your account
         </h1>
-        <p style={{
-          margin: '0 0 32px',
-          color: 'oklch(0.55 0.02 260)',
-          fontSize: '14px',
-          textAlign: 'center',
-          lineHeight: 1.5,
-        }}>
+        <p style={{ margin: '0 0 32px', color: 'oklch(0.55 0.02 260)', fontSize: '14px', textAlign: 'center', lineHeight: 1.5 }}>
           Account creation takes 30 seconds. Payment comes next.
         </p>
 
@@ -194,12 +177,7 @@ export default function SignupPage() {
         </button>
 
         {/* Divider */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          marginBottom: '20px',
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
           <div style={{ flex: 1, height: '1px', background: 'oklch(0.18 0.02 260)' }} />
           <span style={{ color: 'oklch(0.40 0.02 260)', fontSize: '12px' }}>or</span>
           <div style={{ flex: 1, height: '1px', background: 'oklch(0.18 0.02 260)' }} />
@@ -246,7 +224,7 @@ export default function SignupPage() {
           />
 
           {error && (
-            <p style={{ margin: 0, color: 'oklch(0.55 0.22 25)', fontSize: '13px' }}>
+            <p style={{ margin: 0, color: '#f59e0b', fontSize: '13px', lineHeight: 1.5 }}>
               {error}
             </p>
           )}
@@ -255,8 +233,8 @@ export default function SignupPage() {
             type="submit"
             disabled={loading}
             style={{
-              background: '#FF7A00',
-              color: 'oklch(0.09 0.01 260)',
+              background: '#f59e0b',
+              color: '#000',
               border: 'none',
               padding: '14px 20px',
               borderRadius: '6px',
@@ -271,15 +249,9 @@ export default function SignupPage() {
           </button>
         </form>
 
-        {/* Login link */}
-        <p style={{
-          margin: '24px 0 0',
-          textAlign: 'center',
-          color: 'oklch(0.55 0.02 260)',
-          fontSize: '13px',
-        }}>
+        <p style={{ margin: '24px 0 0', textAlign: 'center', color: 'oklch(0.55 0.02 260)', fontSize: '13px' }}>
           Already have an account?{' '}
-          <Link href="/login" style={{ color: '#FF7A00', textDecoration: 'none', fontWeight: 600 }}>
+          <Link href="/login" style={{ color: '#f59e0b', textDecoration: 'none', fontWeight: 600 }}>
             Log in →
           </Link>
         </p>
