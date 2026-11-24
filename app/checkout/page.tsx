@@ -9,7 +9,15 @@ export default function CheckoutPage() {
   const router = useRouter()
   const supabase = createClientComponentClient()
 
-  const plan = searchParams.get('plan') || 'pro'
+  // Read plan from URL — fall back to localStorage if Google OAuth stripped params
+  const planFromUrl = searchParams.get('plan')
+  const plan = planFromUrl || (() => {
+    try {
+      const saved = localStorage.getItem('geoom_auth_next') || ''
+      const match = saved.match(/[?&]plan=([^&]+)/)
+      return match ? match[1] : 'pro'
+    } catch { return 'pro' }
+  })()
   const score = searchParams.get('score')
   const business = searchParams.get('business')
 
