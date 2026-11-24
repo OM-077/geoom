@@ -43,10 +43,12 @@ export default function SignupPage() {
     // Store next destination in localStorage — Supabase may strip query params
     // from the redirectTo URL, so we save it and read it in the callback
     try { localStorage.setItem('geoom_auth_next', next) } catch { /* noop */ }
+    // redirectTo must exactly match an allowed URL in Supabase
+    // We store the destination in localStorage and read it after callback
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        redirectTo: `${window.location.origin}/auth/callback`,
       }
     })
     if (error) {
