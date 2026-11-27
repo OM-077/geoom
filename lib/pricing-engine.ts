@@ -84,6 +84,10 @@ export async function createCheckoutSession(params: {
       }
     }
 
+    console.log('Dodo request body:', JSON.stringify(body))
+    console.log('Dodo API key set:', !!process.env.DODO_API_KEY)
+    console.log('App URL:', process.env.NEXT_PUBLIC_APP_URL)
+
     const response = await fetch('https://api.dodopayments.com/checkouts', {
       method: 'POST',
       headers: {
@@ -103,8 +107,9 @@ export async function createCheckoutSession(params: {
     console.log('Dodo checkout response:', data)
     return { checkoutUrl: data.checkout_url || null }
   } catch (err) {
-    console.error('Checkout exception:', err)
-    return { checkoutUrl: null, error: 'Payment system error' }
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('Checkout exception:', msg)
+    return { checkoutUrl: null, error: `Payment error: ${msg}` }
   }
 }
 
