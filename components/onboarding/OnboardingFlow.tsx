@@ -149,19 +149,24 @@ export default function OnboardingFlow() {
       else {
         setScanDone(true)
         setTimeout(() => {
-          // After onboarding, go to checkout to complete payment
-          // Read saved plan from localStorage (set before Google OAuth)
-          try {
-            const saved = localStorage.getItem('geoom_auth_next')
-            if (saved && saved.includes('/checkout')) {
-              localStorage.removeItem('geoom_auth_next')
-              router.push(saved)
-            } else {
-              const plan = new URLSearchParams(window.location.search).get('plan') || 'pro'
-              router.push(`/checkout?plan=${plan}`)
+          // If they already paid (came from Dodo return_url), go to dashboard
+          // Otherwise go to checkout
+          const paid = new URLSearchParams(window.location.search).get('paid')
+          if (paid === 'true') {
+            router.push('/dashboard')
+          } else {
+            try {
+              const saved = localStorage.getItem('geoom_auth_next')
+              if (saved && saved.includes('/checkout')) {
+                localStorage.removeItem('geoom_auth_next')
+                router.push(saved)
+              } else {
+                const plan = new URLSearchParams(window.location.search).get('plan') || 'pro'
+                router.push(`/checkout?plan=${plan}`)
+              }
+            } catch {
+              router.push('/checkout')
             }
-          } catch {
-            router.push('/checkout')
           }
         }, 2500)
       }
@@ -432,22 +437,28 @@ export default function OnboardingFlow() {
 
               <button
                 onClick={() => {
-                  try {
-                    const saved = localStorage.getItem('geoom_auth_next')
-                    if (saved && saved.includes('/checkout')) {
-                      localStorage.removeItem('geoom_auth_next')
-                      router.push(saved)
-                    } else {
-                      const plan = new URLSearchParams(window.location.search).get('plan') || 'pro'
-                      router.push(`/checkout?plan=${plan}`)
+                  const params = new URLSearchParams(window.location.search)
+                  if (params.get('paid') === 'true') {
+                    router.push('/dashboard')
+                  } else {
+                    try {
+                      const saved = localStorage.getItem('geoom_auth_next')
+                      if (saved && saved.includes('/checkout')) {
+                        localStorage.removeItem('geoom_auth_next')
+                        router.push(saved)
+                      } else {
+                        router.push(`/checkout?plan=${params.get('plan') || 'pro'}`)
+                      }
+                    } catch {
+                      router.push('/checkout')
                     }
-                  } catch {
-                    router.push('/checkout')
                   }
                 }}
                 className="block w-full text-center font-barlow font-bold text-lg py-4 rounded"
                 style={{ background: 'var(--kinpaku-gold)', color: 'var(--lacquer-black)', border: 'none', cursor: 'pointer', width: '100%' }}>
-                Continue to payment →
+                {new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('paid') === 'true'
+                  ? 'Go to my dashboard →'
+                  : 'Continue to payment →'}
               </button>
               <p className="text-xs text-center mt-2.5" style={{ color: 'var(--text-muted)' }}>You can always find this action in your Fix Plan.</p>
             </div>

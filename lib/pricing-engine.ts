@@ -76,7 +76,7 @@ export async function createCheckoutSession(params: {
         email: params.email,
         name: params.businessName
       },
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscribed=true`,
+      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/onboarding?paid=true`,
       metadata: {
         business_id: params.businessId,
         pricing_tier: params.tier,
