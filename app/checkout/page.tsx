@@ -9,7 +9,6 @@ function CheckoutInner() {
   const router = useRouter()
   const supabase = createClientComponentClient()
 
-  // Read plan from URL — fall back to localStorage if Google OAuth stripped params
   const planFromUrl = searchParams.get('plan')
   const plan = planFromUrl || (() => {
     try {
@@ -18,8 +17,6 @@ function CheckoutInner() {
       return match ? match[1] : 'pro'
     } catch { return 'pro' }
   })()
-  const score = searchParams.get('score')
-  const business = searchParams.get('business')
 
   const [status, setStatus] = useState<'loading' | 'redirecting' | 'error'>('loading')
   const [errorMsg, setErrorMsg] = useState('')
@@ -27,55 +24,29 @@ function CheckoutInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     async function startCheckout() {
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
         return
       }
 
-      // Get their business record
-      const { data: biz } = await supabase
-        .from('businesses')
-        .select('id, business_name')
-        .eq('user_id', user.id)
-        .single()
-
-      const businessId = biz?.id
-      const businessName = biz?.business_name || business || 'Your Business'
-
-      if (!businessId) {
-        // No business yet — go to onboarding first, then come back
-        const params = new URLSearchParams({ plan, ...(score ? { score } : {}), ...(business ? { business } : {}) })
-        router.push(`/onboarding?next=/checkout&${params.toString()}`)
-        return
-      }
-
-      // Create Dodo checkout session
+      // Call checkout API — it creates business row if needed, then calls Dodo
       const res = await fetch('/api/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          tier: plan === 'founding' ? 'founding' : 'pro',
-        }),
+        body: JSON.stringify({ tier: plan === 'founding' ? 'founding' : 'pro' }),
       })
 
-      if (!res.ok) {
-        setErrorMsg('Could not start checkout. Please try again.')
-        setStatus('error')
-        return
-      }
+      const json = await res.json() as { checkoutUrl?: string; error?: string }
 
-      const { checkoutUrl, error } = await res.json()
-
-      if (error || !checkoutUrl) {
-        setErrorMsg(error || 'No checkout URL returned.')
+      if (!res.ok || json.error || !json.checkoutUrl) {
+        setErrorMsg(json.error || 'Could not start checkout. Please try again.')
         setStatus('error')
         return
       }
 
       setStatus('redirecting')
-      window.location.href = checkoutUrl
+      window.location.href = json.checkoutUrl
     }
 
     startCheckout()
@@ -83,19 +54,14 @@ function CheckoutInner() {
 
   return (
     <div style={{ background: '#0d0d10', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
-      <div style={{ textAlign: 'center', maxWidth: 400 }}>
-        {status === 'loading' && (
+      <div style={{ textAlign: 'center', maxWidth: 400, padding: '0 24px' }}>
+        {(status === 'loading' || status === 'redirecting') && (
           <>
             <div style={{ width: 40, height: 40, border: '3px solid rgba(245,158,11,0.3)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 20px' }} />
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 15 }}>Setting up your checkout…</p>
-          </>
-        )}
-        {status === 'redirecting' && (
-          <>
-            <div style={{ width: 40, height: 40, border: '3px solid rgba(245,158,11,0.3)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 20px' }} />
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 15 }}>Redirecting to payment…</p>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 15 }}>
+              {status === 'loading' ? 'Setting up your checkout…' : 'Redirecting to payment…'}
+            </p>
           </>
         )}
         {status === 'error' && (

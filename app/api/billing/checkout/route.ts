@@ -25,21 +25,51 @@ export async function POST(req: NextRequest) {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { data: business } = await supabase
+    const body = await req.json() as { tier?: string; referral_code?: string; business_name?: string }
+    const tier = (body.tier || 'pro') as PricingTier
+    const email = session.user.email || ''
+
+    // Try to get existing business
+    let { data: business } = await supabase
       .from('businesses')
       .select('id, business_name, email')
       .eq('user_id', session.user.id)
       .single()
 
-    if (!business) return NextResponse.json({ error: 'No business found' }, { status: 404 })
+    // If no business row yet, create one now using whatever info we have
+    if (!business) {
+      const displayName = session.user.user_metadata?.full_name ||
+                          session.user.user_metadata?.name ||
+                          body.business_name ||
+                          email.split('@')[0] ||
+                          'My Business'
 
-    const body = await req.json() as { tier?: string; referral_code?: string }
-    const tier = (body.tier || 'pro') as PricingTier
-    const email = business.email || session.user.email || ''
+      const { data: newBiz, error: insertError } = await supabase
+        .from('businesses')
+        .insert({
+          user_id: session.user.id,
+          business_name: displayName,
+          email,
+          trade: 'HVAC',
+          city: '',
+          subscription_status: 'inactive',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select('id, business_name, email')
+        .single()
+
+      if (insertError || !newBiz) {
+        console.error('Failed to create business:', insertError)
+        return NextResponse.json({ error: 'Could not set up your account. Please try again.' }, { status: 500 })
+      }
+
+      business = newBiz
+    }
 
     const result = await createCheckoutSession({
       businessId: business.id,
-      email,
+      email: business.email || email,
       businessName: business.business_name,
       tier,
       referralCode: body.referral_code
