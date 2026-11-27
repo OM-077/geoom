@@ -97,15 +97,19 @@ export async function createCheckoutSession(params: {
       body: JSON.stringify(body)
     })
 
+    const rawText = await response.text()
+    console.log('Dodo response status:', response.status)
+    console.log('Dodo response body:', rawText)
+
     if (!response.ok) {
-      const error = await response.json() as { message?: string; error?: string }
-      console.error('Dodo checkout error:', response.status, error)
-      return { checkoutUrl: null, error: error.message || error.error || 'Checkout failed' }
+      let errMsg = `HTTP ${response.status}`
+      try { const e = JSON.parse(rawText) as { message?: string; error?: string }; errMsg = e.message || e.error || errMsg } catch {}
+      return { checkoutUrl: null, error: `Dodo ${errMsg}` }
     }
 
-    const data = await response.json() as { checkout_url?: string; session_id?: string }
-    console.log('Dodo checkout response:', data)
-    return { checkoutUrl: data.checkout_url || null }
+    const data = JSON.parse(rawText) as { checkout_url?: string; url?: string; session_id?: string }
+    console.log('Dodo parsed:', JSON.stringify(data))
+    return { checkoutUrl: data.checkout_url || data.url || null }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('Checkout exception:', msg)
