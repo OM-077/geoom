@@ -74,11 +74,33 @@ export default function OnboardingFlow() {
     setTimeout(() => goTo(1), 300)
   }
 
-  // Step 1 — confirm business
-  function submitStep1() {
+  // Step 1 — confirm business → save to DB
+  async function submitStep1() {
     if (!trade || !businessName.trim()) return
     setStep1Loading(true)
-    setTimeout(() => { setStep1Loading(false); goTo(2) }, 900)
+    try {
+      const res = await fetch('/api/business/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          business_name: businessName.trim(),
+          trade,
+          city: city.trim(),
+          state: stateVal.trim() || undefined,
+          phone: phone.trim() || undefined,
+          website_url: websiteUrl.trim() || undefined,
+        }),
+      })
+      if (!res.ok) {
+        const err = await res.json() as { error?: string }
+        console.error('Business save error:', err)
+        // Don't block onboarding — continue anyway
+      }
+    } catch (e) {
+      console.error('Business save failed:', e)
+    }
+    setStep1Loading(false)
+    goTo(2)
   }
 
   function validateWebsite() {
@@ -408,10 +430,25 @@ export default function OnboardingFlow() {
 
               <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>Your next action will be ready Monday morning. We&apos;ll email it to you at 8am.</p>
 
-              <a href="/checkout" className="block w-full text-center font-barlow font-bold text-lg py-4 rounded"
-                style={{ background: 'var(--kinpaku-gold)', color: 'var(--lacquer-black)', textDecoration: 'none' }}>
-                Go to my dashboard →
-              </a>
+              <button
+                onClick={() => {
+                  try {
+                    const saved = localStorage.getItem('geoom_auth_next')
+                    if (saved && saved.includes('/checkout')) {
+                      localStorage.removeItem('geoom_auth_next')
+                      router.push(saved)
+                    } else {
+                      const plan = new URLSearchParams(window.location.search).get('plan') || 'pro'
+                      router.push(`/checkout?plan=${plan}`)
+                    }
+                  } catch {
+                    router.push('/checkout')
+                  }
+                }}
+                className="block w-full text-center font-barlow font-bold text-lg py-4 rounded"
+                style={{ background: 'var(--kinpaku-gold)', color: 'var(--lacquer-black)', border: 'none', cursor: 'pointer', width: '100%' }}>
+                Continue to payment →
+              </button>
               <p className="text-xs text-center mt-2.5" style={{ color: 'var(--text-muted)' }}>You can always find this action in your Fix Plan.</p>
             </div>
           )}
