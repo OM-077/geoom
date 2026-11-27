@@ -66,7 +66,8 @@ function CheckoutInner() {
         )}
         {status === 'error' && (
           <>
-            <p style={{ color: '#ef4444', fontSize: 15, marginBottom: 16 }}>{errorMsg}</p>
+            <p style={{ color: '#ef4444', fontSize: 15, marginBottom: 8 }}>{errorMsg}</p>
+            <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, marginBottom: 16, wordBreak: 'break-all' }}>{errorMsg}</p>
             <button
               onClick={() => window.location.reload()}
               style={{ background: '#f59e0b', color: '#000', border: 'none', padding: '10px 24px', borderRadius: 8, fontWeight: 700, cursor: 'pointer', fontSize: 14 }}

@@ -29,42 +29,51 @@ export async function POST(req: NextRequest) {
     const tier = (body.tier || 'pro') as PricingTier
     const email = session.user.email || ''
 
+    // Use admin client to bypass RLS for business lookup/create
+    const { getSupabaseAdmin } = await import('@/lib/supabase')
+    const admin = getSupabaseAdmin()
+
     // Try to get existing business
-    let { data: business } = await supabase
+    const { data: existing } = await admin
       .from('businesses')
       .select('id, business_name, email')
       .eq('user_id', session.user.id)
       .single()
 
-    // If no business row yet, create one now using whatever info we have
-    if (!business) {
-      const displayName = session.user.user_metadata?.full_name ||
-                          session.user.user_metadata?.name ||
-                          body.business_name ||
-                          email.split('@')[0] ||
-                          'My Business'
+    let business = existing
 
-      const { data: newBiz, error: insertError } = await supabase
+    if (!business) {
+      const displayName =
+        session.user.user_metadata?.full_name ||
+        session.user.user_metadata?.name ||
+        body.business_name ||
+        email.split('@')[0] ||
+        'My Business'
+
+      // Log what columns we're trying to insert
+      console.log('Creating business for user:', session.user.id, 'name:', displayName)
+
+      const { data: newBiz, error: insertError } = await admin
         .from('businesses')
         .insert({
           user_id: session.user.id,
           business_name: displayName,
           email,
-          trade: 'HVAC',
-          city: '',
           subscription_status: 'inactive',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
         })
         .select('id, business_name, email')
         .single()
 
       if (insertError || !newBiz) {
-        console.error('Failed to create business:', insertError)
-        return NextResponse.json({ error: 'Could not set up your account. Please try again.' }, { status: 500 })
+        console.error('Business insert failed:', JSON.stringify(insertError))
+        // Return the actual DB error so we can see it
+        return NextResponse.json({
+          error: `DB error: ${insertError?.message || 'unknown'} (code: ${insertError?.code || '?'})`
+        }, { status: 500 })
       }
 
       business = newBiz
+      console.log('Business created:', business.id)
     }
 
     const result = await createCheckoutSession({
@@ -81,7 +90,8 @@ export async function POST(req: NextRequest) {
       error: result.error
     })
   } catch (error) {
-    console.error('Checkout error:', error)
-    return NextResponse.json({ error: 'Failed' }, { status: 500 })
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error('Checkout error:', msg)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }
