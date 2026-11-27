@@ -4,7 +4,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
+let _resend: Resend | null = null
+function getResend() { if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY!); return _resend }
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
 
     const firstName = businessName?.split(' ')[0] || 'there'
 
-    await resend.emails.send({
+    await getResend()!.emails.send({
       from: 'GeoOm <hello@geoom.site>',
       to: email,
       subject: `Your AI visibility score for ${businessName || 'your business'}`,

@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
-export default function SignupPage() {
+function SignupInner() {
   const supabase = createClientComponentClient()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -264,5 +264,13 @@ export default function SignupPage() {
 
       </div>
     </main>
+  )
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<main style={{ minHeight: '100vh', background: 'oklch(0.09 0.01 260)' }} />}>
+      <SignupInner />
+    </Suspense>
   )
 }

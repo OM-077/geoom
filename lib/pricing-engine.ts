@@ -64,53 +64,44 @@ export async function createCheckoutSession(params: {
   }
 
   try {
-    const isOneTime = params.tier === 'founding'
-
+    // Use Dodo Payments Checkout Sessions API (POST /checkouts)
     const body: Record<string, unknown> = {
+      product_cart: [
+        {
+          product_id: pricing.priceId,
+          quantity: 1
+        }
+      ],
       customer: {
         email: params.email,
         name: params.businessName
       },
+      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscribed=true`,
       metadata: {
         business_id: params.businessId,
         pricing_tier: params.tier,
-        months_access: params.tier === 'founding' ? 12 : null,
         referred_by_code: params.referralCode || null
-      },
-      payment_link: true,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscribed=true`
+      }
     }
 
-    if (isOneTime) {
-      body.amount = pricing.amount * 100
-      body.currency = 'USD'
-    } else {
-      body.billing = { interval: 'month', interval_count: 1 }
-      body.price_id = pricing.priceId
-      body.quantity = 1
-    }
-
-    const endpoint = isOneTime
-      ? 'https://api.dodopayments.com/v1/payments'
-      : 'https://api.dodopayments.com/v1/subscriptions'
-
-    const response = await fetch(endpoint, {
+    const response = await fetch('https://api.dodopayments.com/checkouts', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.DODO_PAYMENTS_API_KEY}`,
+        Authorization: `Bearer ${process.env.DODO_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(body)
     })
 
     if (!response.ok) {
-      const error = await response.json() as { message?: string }
-      console.error('Dodo checkout error:', error)
-      return { checkoutUrl: null, error: error.message || 'Checkout failed' }
+      const error = await response.json() as { message?: string; error?: string }
+      console.error('Dodo checkout error:', response.status, error)
+      return { checkoutUrl: null, error: error.message || error.error || 'Checkout failed' }
     }
 
-    const data = await response.json() as { payment_link?: string }
-    return { checkoutUrl: data.payment_link || null }
+    const data = await response.json() as { checkout_url?: string; session_id?: string }
+    console.log('Dodo checkout response:', data)
+    return { checkoutUrl: data.checkout_url || null }
   } catch (err) {
     console.error('Checkout exception:', err)
     return { checkoutUrl: null, error: 'Payment system error' }

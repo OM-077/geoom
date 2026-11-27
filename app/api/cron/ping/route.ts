@@ -1,5 +1,6 @@
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,6 +10,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Lightweight ping to keep Supabase free tier active
+    const { supabaseAdmin } = await import('@/lib/supabase')
     await supabaseAdmin.from('businesses').select('id').limit(1)
 
     return NextResponse.json({

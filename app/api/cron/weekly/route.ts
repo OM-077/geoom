@@ -1,6 +1,6 @@
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
-import { queueAllWeeklyAudits } from '@/lib/job-queue'
-import { cleanExpiredCache } from '@/lib/audit-cache'
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,6 +8,9 @@ export async function POST(req: NextRequest) {
     if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const { queueAllWeeklyAudits } = await import('@/lib/job-queue')
+    const { cleanExpiredCache } = await import('@/lib/audit-cache')
 
     const [auditResult] = await Promise.all([
       queueAllWeeklyAudits(),

@@ -1,6 +1,6 @@
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase'
-import { queuePipelinePoll } from '@/lib/job-queue'
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,6 +8,9 @@ export async function POST(req: NextRequest) {
     if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const { supabaseAdmin } = await import('@/lib/supabase')
+    const { queuePipelinePoll } = await import('@/lib/job-queue')
 
     const { data: businesses } = await supabaseAdmin
       .from('businesses')

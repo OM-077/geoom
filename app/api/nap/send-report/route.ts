@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 // ============================================
 // NAP REPORT EMAIL SENDER
 // Sends the full NAP audit to office manager
@@ -10,7 +12,8 @@ import { Resend } from 'resend'
 import { supabaseAdmin } from '@/lib/supabase'
 import { getNAPStatus } from '@/lib/nap-scanner'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
+let _resend: Resend | null = null
+function getResend() { if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY!); return _resend }
 
 // Simple token: base64(businessId:secret)
 function verifyToken(token: string, businessId: string): boolean {
@@ -150,7 +153,7 @@ export async function POST(req: NextRequest) {
 </body>
 </html>`
 
-    const { data: emailData, error } = await resend.emails.send({
+    const { data: emailData, error } = await getResend()!.emails.send({
       from: 'GeoOm <reports@geoom.site>',
       to: recipientEmail,
       subject: `NAP Report: ${business.business_name} — ${overallScore}% Consistency`,

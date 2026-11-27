@@ -14,7 +14,8 @@ import { cookies } from 'next/headers'
 import { Resend } from 'resend'
 import { supabaseAdmin } from '@/lib/supabase'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
+let _resend: Resend | null = null
+function getResend() { if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY!); return _resend }
 
 export async function POST(req: NextRequest) {
   try {
@@ -89,7 +90,7 @@ export async function POST(req: NextRequest) {
     // Send confirmation email
     if (business.email) {
       const improvement = scoreAfter - scoreBefore
-      await resend.emails.send({
+      await getResend()!.emails.send({
         from: 'GeoOm <team@geoom.site>',
         to: business.email,
         subject: `Case Study Submitted — +${improvement} points!`,

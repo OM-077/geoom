@@ -12,7 +12,12 @@ import { Resend } from 'resend'
 import { supabaseAdmin } from './supabase'
 import { scoreToMarketShare } from './utils'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
+// Lazy init — avoids "Missing API key" error at build time
+let _resend: Resend | null = null
+function getResend() {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY!)
+  return _resend
+}
 
 export async function sendMondayEmail(businessId: string): Promise<{
   sent: boolean
@@ -179,7 +184,7 @@ ${pendingCount > 0 ? '<tr><td style="background:rgba(0,230,118,0.08);border:1px 
 </html>`
 
   try {
-    const { data: emailData, error } = await resend.emails.send({
+    const { data: emailData, error } = await getResend().emails.send({
       from: 'GeoOm <reports@geoom.site>',
       to: business.email,
       subject: `Your AI Market Share: ${shareNow}% ${shareChange > 0 ? '📈' : shareChange < 0 ? '📉' : ''}`,

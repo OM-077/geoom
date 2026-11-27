@@ -1,15 +1,20 @@
+export const dynamic = 'force-dynamic'
+
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 type Params = Promise<{ code: string }>
 
 export default async function InvitePage({ params }: { params: Params }) {
   const { code } = await params
+  const supabase = getSupabase()
 
   const { data: invite } = await supabase
     .from('referrals')
@@ -52,7 +57,7 @@ export default async function InvitePage({ params }: { params: Params }) {
             See if ChatGPT & Siri can find your {trade} business in {city}
           </h1>
           <p style={{ margin: '0 0 32px', fontSize: '15px', color: 'oklch(0.70 0.02 260)', lineHeight: 1.6 }}>
-            Get a free AI visibility score in 60 seconds. No credit card. See exactly which AI engines can recommend you — and which can't.
+            Get a free AI visibility score in 60 seconds. No credit card. See exactly which AI engines can recommend you — and which can&apos;t.
           </p>
           <Link href={`/audit?ref=${code}`} style={{
             display: 'inline-block',

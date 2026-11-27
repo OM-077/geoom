@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 // ============================================
 // LOGIN PAGE — app/login/page.tsx
 // Google OAuth + Email/Password

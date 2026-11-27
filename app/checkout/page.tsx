@@ -1,10 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
-export default function CheckoutPage() {
+function CheckoutInner() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const supabase = createClientComponentClient()
@@ -111,5 +111,13 @@ export default function CheckoutPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<div style={{ background: '#0d0d10', minHeight: '100vh' }} />}>
+      <CheckoutInner />
+    </Suspense>
   )
 }
