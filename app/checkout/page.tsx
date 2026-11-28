@@ -30,23 +30,55 @@ function CheckoutInner() {
         return
       }
 
-      // Call checkout API — it creates business row if needed, then calls Dodo
+      // Step 1: Create/find business row in DB (server-side, Supabase works fine)
       const res = await fetch('/api/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tier: plan === 'founding' ? 'founding' : 'pro' }),
       })
 
-      const json = await res.json() as { checkoutUrl?: string; error?: string }
+      const json = await res.json() as {
+        success?: boolean
+        businessId?: string
+        productId?: string
+        email?: string
+        businessName?: string
+        tier?: string
+        returnUrl?: string
+        error?: string
+      }
 
-      if (!res.ok || json.error || !json.checkoutUrl) {
-        setErrorMsg(json.error || 'Could not start checkout. Please try again.')
+      if (!res.ok || json.error || !json.productId) {
+        setErrorMsg(json.error || 'Could not set up account. Please try again.')
         setStatus('error')
         return
       }
 
+      // Step 2: Call Dodo from browser (Vercel server blocks outbound DNS)
       setStatus('redirecting')
-      window.location.href = json.checkoutUrl
+      const dodoRes = await fetch('https://api.dodopayments.com/checkouts', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_DODO_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          product_cart: [{ product_id: json.productId, quantity: 1 }],
+          customer: { email: json.email, name: json.businessName },
+          return_url: json.returnUrl,
+          metadata: { business_id: json.businessId, pricing_tier: json.tier }
+        })
+      })
+
+      const dodoData = await dodoRes.json() as { checkout_url?: string; message?: string }
+
+      if (!dodoRes.ok || !dodoData.checkout_url) {
+        setErrorMsg(dodoData.message || `Dodo error ${dodoRes.status}`)
+        setStatus('error')
+        return
+      }
+
+      window.location.href = dodoData.checkout_url
     }
 
     startCheckout()

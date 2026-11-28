@@ -76,18 +76,19 @@ export async function POST(req: NextRequest) {
       console.log('Business created:', business.id)
     }
 
-    const result = await createCheckoutSession({
+    // Return business info + product ID so client can call Dodo directly
+    // (Vercel Hobby plan blocks outbound DNS to payment APIs)
+    const { PRICING } = await import('@/lib/pricing-engine')
+    const pricing = PRICING[tier]
+
+    return NextResponse.json({
+      success: true,
       businessId: business.id,
+      productId: pricing.priceId,
       email: business.email || email,
       businessName: business.business_name,
       tier,
-      referralCode: body.referral_code
-    })
-
-    return NextResponse.json({
-      success: !!result.checkoutUrl,
-      checkoutUrl: result.checkoutUrl,
-      error: result.error
+      returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/onboarding?paid=true`
     })
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error)
