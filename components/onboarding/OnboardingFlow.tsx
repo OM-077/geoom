@@ -340,7 +340,53 @@ export default function OnboardingFlow() {
                     <div className="mt-2 ml-4">
                       {isConnected ? (
                         <span className="text-sm font-semibold" style={{ color: 'var(--verdigris)' }}>Connected ✓</span>
+                      ) : tool.key === 'Workiz' || tool.key === 'ServiceM8' ? (
+                        // API key input — user gets this from their own account settings
+                        <div className="flex gap-2 items-center">
+                          <input
+                            type="text"
+                            placeholder={tool.key === 'Workiz' ? 'Paste your Workiz API token' : 'Paste your ServiceM8 API key'}
+                            id={`apikey-${tool.key}`}
+                            className="rounded px-3 py-2 text-sm flex-1"
+                            style={{ background: 'var(--lacquer-deep)', border: '1px solid var(--border-subtle)', color: 'var(--champagne)', fontFamily: 'Inter,sans-serif' }}
+                          />
+                          <button onClick={async () => {
+                            const input = document.getElementById(`apikey-${tool.key}`) as HTMLInputElement
+                            const apiKey = input?.value?.trim()
+                            if (!apiKey) return
+                            setConnectLoading(true)
+                            const res = await fetch('/api/settings/integrations', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ integration: tool.key.toLowerCase(), apiKey })
+                            })
+                            const json = await res.json() as { success?: boolean }
+                            if (json.success) setConnectedTool(tool.key)
+                            else setConnectError('Invalid API key — check your account settings')
+                            setConnectLoading(false)
+                          }} disabled={connectLoading}
+                            className="text-sm font-semibold px-4 py-2 rounded"
+                            style={{ background: 'var(--verdigris)', color: '#000', cursor: 'pointer', border: 'none', fontFamily: 'Inter,sans-serif' }}>
+                            {connectLoading ? '…' : 'Save'}
+                          </button>
+                        </div>
+                      ) : tool.key === 'HousecallPro' ? (
+                        // Webhook URL — user pastes into HousecallPro settings
+                        <div>
+                          <p className="text-xs mb-1.5" style={{ color: 'var(--text-muted)' }}>In HousecallPro → Settings → Webhooks, add this URL:</p>
+                          <div className="flex gap-2 items-center">
+                            <code className="text-xs px-2 py-1.5 rounded flex-1 break-all" style={{ background: 'var(--lacquer-deep)', color: 'var(--verdigris)', fontFamily: 'monospace' }}>
+                              {typeof window !== 'undefined' ? `${window.location.origin}/api/pipelines/housecall/YOUR_BUSINESS_ID` : '...'}
+                            </code>
+                            <button onClick={() => { setConnectedTool(tool.key) }}
+                              className="text-xs font-semibold px-3 py-1.5 rounded shrink-0"
+                              style={{ background: 'var(--verdigris)', color: '#000', cursor: 'pointer', border: 'none' }}>
+                              Done ✓
+                            </button>
+                          </div>
+                        </div>
                       ) : (
+                        // Jobber — real OAuth
                         <>
                           <button onClick={() => connectTool(tool.key)} disabled={connectLoading}
                             className="text-sm font-semibold px-4 py-2 rounded transition-colors"
