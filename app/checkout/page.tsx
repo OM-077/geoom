@@ -30,55 +30,34 @@ function CheckoutInner() {
         return
       }
 
-      // Step 1: Create/find business row in DB (server-side, Supabase works fine)
+      // Dodo hosted checkout links (no API call needed)
+      const DODO_LINKS: Record<string, string> = {
+        pro: 'https://test.checkout.dodopayments.com/buy/pdt_0NrZxL5oL6mMCnFvZJQus?quantity=1',
+        founding: 'https://test.checkout.dodopayments.com/buy/pdt_0NrZxWpCwksakQWh3SFiN?quantity=1',
+      }
+
+      // Step 1: Create/find business row in DB
       const res = await fetch('/api/billing/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tier: plan === 'founding' ? 'founding' : 'pro' }),
       })
 
-      const json = await res.json() as {
-        success?: boolean
-        businessId?: string
-        productId?: string
-        email?: string
-        businessName?: string
-        tier?: string
-        returnUrl?: string
-        error?: string
-      }
+      const json = await res.json() as { success?: boolean; email?: string; error?: string }
 
-      if (!res.ok || json.error || !json.productId) {
+      if (!res.ok || json.error) {
         setErrorMsg(json.error || 'Could not set up account. Please try again.')
         setStatus('error')
         return
       }
 
-      // Step 2: Call Dodo from browser (Vercel server blocks outbound DNS)
+      // Step 2: Redirect to Dodo hosted checkout (works on any Vercel plan)
       setStatus('redirecting')
-      const dodoRes = await fetch('https://api.dodopayments.com/checkouts', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_DODO_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          product_cart: [{ product_id: json.productId, quantity: 1 }],
-          customer: { email: json.email, name: json.businessName },
-          return_url: json.returnUrl,
-          metadata: { business_id: json.businessId, pricing_tier: json.tier }
-        })
-      })
-
-      const dodoData = await dodoRes.json() as { checkout_url?: string; message?: string }
-
-      if (!dodoRes.ok || !dodoData.checkout_url) {
-        setErrorMsg(dodoData.message || `Dodo error ${dodoRes.status}`)
-        setStatus('error')
-        return
-      }
-
-      window.location.href = dodoData.checkout_url
+      const tier = plan === 'founding' ? 'founding' : 'pro'
+      const baseUrl = DODO_LINKS[tier]
+      const returnUrl = `${window.location.origin}/onboarding?paid=true`
+      const checkoutUrl = `${baseUrl}&redirect_url=${encodeURIComponent(returnUrl)}${json.email ? `&customer[email]=${encodeURIComponent(json.email)}` : ''}`
+      window.location.href = checkoutUrl
     }
 
     startCheckout()
