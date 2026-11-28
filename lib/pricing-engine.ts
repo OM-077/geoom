@@ -86,28 +86,38 @@ export async function createCheckoutSession(params: {
 
     console.log('Dodo request body:', JSON.stringify(body))
     console.log('Dodo API key set:', !!process.env.DODO_API_KEY)
-    console.log('App URL:', process.env.NEXT_PUBLIC_APP_URL)
 
-    const response = await fetch('https://api.dodopayments.com/checkouts', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${process.env.DODO_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(body)
+    // Use Node https module to avoid Vercel fetch blocking
+    const rawText = await new Promise<string>((resolve, reject) => {
+      const https = require('https') as typeof import('https')
+      const payload = JSON.stringify(body)
+      const req = https.request({
+        hostname: 'api.dodopayments.com',
+        path: '/checkouts',
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.DODO_API_KEY}`,
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(payload)
+        }
+      }, (res) => {
+        let data = ''
+        res.on('data', chunk => { data += chunk })
+        res.on('end', () => {
+          console.log('Dodo status:', res.statusCode, 'body:', data)
+          if (res.statusCode && res.statusCode >= 400) {
+            reject(new Error(`HTTP ${res.statusCode}: ${data}`))
+          } else {
+            resolve(data)
+          }
+        })
+      })
+      req.on('error', reject)
+      req.write(payload)
+      req.end()
     })
 
-    const rawText = await response.text()
-    console.log('Dodo response status:', response.status)
-    console.log('Dodo response body:', rawText)
-
-    if (!response.ok) {
-      let errMsg = `HTTP ${response.status}`
-      try { const e = JSON.parse(rawText) as { message?: string; error?: string }; errMsg = e.message || e.error || errMsg } catch {}
-      return { checkoutUrl: null, error: `Dodo ${errMsg}` }
-    }
-
-    const data = JSON.parse(rawText) as { checkout_url?: string; url?: string; session_id?: string }
+    const data = JSON.parse(rawText) as { checkout_url?: string; url?: string }
     console.log('Dodo parsed:', JSON.stringify(data))
     return { checkoutUrl: data.checkout_url || data.url || null }
   } catch (err) {
