@@ -150,13 +150,14 @@ export default function DashboardPage() {
     completed: false,
   } : defaultAction
 
-  const platformCoverage = [
-    { name: 'ChatGPT',          status: latestScore > 40 ? 'indexed' : 'not_indexed' as const,  detail: latestScore > 40 ? 'Visible' : 'Not indexed yet' },
-    { name: 'Perplexity',       status: latestScore > 50 ? 'indexed' : 'partial' as const,       detail: latestScore > 50 ? 'Visible' : 'Partial coverage' },
-    { name: 'Google AI',        status: latestScore > 30 ? 'partial' : 'not_indexed' as const,   detail: 'Needs GBP connection',  fix: '/signals?tab=platforms' },
-    { name: 'Copilot',          status: 'not_indexed' as const,                                   detail: 'Fix available',         fix: '/signals?tab=platforms' },
-    { name: 'Gemini',           status: latestScore > 60 ? 'indexed' : 'partial' as const,       detail: latestScore > 60 ? 'Visible' : 'Partial' },
-    { name: 'Siri',             status: 'partial' as const,                                       detail: 'Needs GBP completeness', fix: '/signals?tab=platforms' },
+  type PlatformStatus = 'indexed' | 'not_indexed' | 'partial'
+  const platformCoverage: { name: string; status: PlatformStatus; detail: string; fix?: string }[] = [
+    { name: 'ChatGPT',           status: (latestScore > 40 ? 'indexed' : 'not_indexed') as PlatformStatus,  detail: latestScore > 40 ? 'Visible' : 'Not indexed yet' },
+    { name: 'Perplexity',        status: (latestScore > 50 ? 'indexed' : 'partial') as PlatformStatus,      detail: latestScore > 50 ? 'Visible' : 'Partial coverage' },
+    { name: 'Google AI',         status: (latestScore > 30 ? 'partial' : 'not_indexed') as PlatformStatus,  detail: 'Needs GBP connection',   fix: '/signals?tab=platforms' },
+    { name: 'Copilot',           status: 'not_indexed' as PlatformStatus,                                    detail: 'Fix available',           fix: '/signals?tab=platforms' },
+    { name: 'Gemini',            status: (latestScore > 60 ? 'indexed' : 'partial') as PlatformStatus,      detail: latestScore > 60 ? 'Visible' : 'Partial' },
+    { name: 'Siri',              status: 'partial' as PlatformStatus,                                        detail: 'Needs GBP completeness',  fix: '/signals?tab=platforms' },
   ]
 
   return (
