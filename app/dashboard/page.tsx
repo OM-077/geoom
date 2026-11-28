@@ -1,5 +1,8 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import Sidebar from '@/components/shared/Sidebar'
 import AlertBanner from '@/components/dashboard/AlertBanner'
 import AiVisibilityTrend from '@/components/dashboard/AiVisibilityTrend'
@@ -13,70 +16,180 @@ import AttributionPanel from '@/components/dashboard/AttributionPanel'
 import ScoreWatchPanel from '@/components/dashboard/ScoreWatchPanel'
 import { estimatedCalls } from '@/lib/utils'
 
-// In production: fetch from Supabase with auth session
-const MOCK = {
-  businessName: 'Summit HVAC',
-  trade: 'HVAC',
-  city: 'Denver, CO',
-  score: 34,
-  scoreDelta: +7,
-  estimatedCallsPerMonth: estimatedCalls(34),
-  startingScore: 6,
-  streak: 6,
-  email: 'owner@summithvac.com',
-  scoreHistory: [6,12,18,21,25,27,26,30,31,33,34,34],
-  weekLabels: ['Aug 5','Aug 12','Aug 19','Aug 26','Sep 2','Sep 9','Sep 16','Sep 23','Sep 30','Oct 7','Oct 14','Oct 21'],
-  weekStatuses: ['done','done','done','done','done','missed','done','done','done','done','done','pending'] as const,
-  gbpImpressions: [120, 145, 138, 160, 175, 190, 182, 210],
-reviewVelocity: [1, 0, 2, 1, 3, 2, 2, 3],
-  currentAction: {
-    id: 'faq-schema-001',
-    title: 'Add FAQ schema to your website',
-    signal: 'Schema Markup',
-    timeEstimate: '8 minutes',
-    difficulty: 'Easy — copy and paste',
-    previewStep: 'Go to your website\'s contact or services page in your CMS…',
-    dueDate: 'MON OCT 28',
-    completed: false,
-  },
-  platformCoverage: [
-    { name: 'ChatGPT',       status: 'indexed'     as const, detail: 'Last checked Oct 24' },
-    { name: 'Perplexity',    status: 'indexed'     as const, detail: 'Last checked Oct 24' },
-    { name: 'Google AI',     status: 'partial'     as const, detail: 'Missing: GBP connection',    fix: '/signals?tab=platforms' },
-    { name: 'Copilot',       status: 'not_indexed' as const, detail: 'Fix available',              fix: '/signals?tab=platforms' },
-    { name: 'Gemini',        status: 'indexed'     as const, detail: 'Last checked Oct 24' },
-    { name: 'Siri',          status: 'partial'     as const, detail: 'Missing: GBP completeness',  fix: '/signals?tab=platforms' },
-  ],
-  isPro: false,
+interface Business {
+  id: string
+  business_name: string
+  trade: string | null
+  city: string | null
+  state: string | null
+  email: string | null
+  subscription_status: string
+  pricing_tier: string | null
+}
+
+interface ScoreHistory {
+  score: number
+  week_label: string | null
+  recorded_at: string
+}
+
+interface Action {
+  id: string
+  title: string
+  signal: string | null
+  time_estimate: string | null
+  difficulty: string | null
+  status: string
+  due_date: string | null
 }
 
 export default function DashboardPage() {
-  const d = MOCK
+  const router = useRouter()
+  const supabase = createClientComponentClient()
+
+  const [business, setBusiness] = useState<Business | null>(null)
+  const [scoreHistory, setScoreHistory] = useState<ScoreHistory[]>([])
+  const [currentAction, setCurrentAction] = useState<Action | null>(null)
+  const [latestScore, setLatestScore] = useState(0)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function load() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/login'); return }
+
+      // Load business
+      const { data: biz } = await supabase
+        .from('businesses')
+        .select('id, business_name, trade, city, state, email, subscription_status, pricing_tier')
+        .eq('user_id', user.id)
+        .single()
+
+      if (!biz) { router.push('/onboarding'); return }
+      setBusiness(biz)
+
+      // Load score history
+      const { data: scores } = await supabase
+        .from('score_history')
+        .select('score, week_label, recorded_at')
+        .eq('business_id', biz.id)
+        .order('recorded_at', { ascending: true })
+        .limit(12)
+
+      if (scores && scores.length > 0) {
+        setScoreHistory(scores)
+        setLatestScore(scores[scores.length - 1].score)
+      }
+
+      // Load latest audit score if no history
+      if (!scores || scores.length === 0) {
+        const { data: audit } = await supabase
+          .from('audits')
+          .select('score')
+          .eq('business_id', biz.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+        if (audit) setLatestScore(audit.score)
+      }
+
+      // Load current pending action
+      const { data: actions } = await supabase
+        .from('actions')
+        .select('id, title, signal, time_estimate, difficulty, status, due_date')
+        .eq('business_id', biz.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: true })
+        .limit(1)
+
+      if (actions && actions.length > 0) setCurrentAction(actions[0])
+
+      setLoading(false)
+    }
+    load()
+  }, [router, supabase])
+
+  if (loading) {
+    return (
+      <div style={{ background: '#0d0d10', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ width: 36, height: 36, border: '3px solid rgba(245,158,11,0.3)', borderTopColor: '#f59e0b', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    )
+  }
+
+  if (!business) return null
+
+  const scores = scoreHistory.map(s => s.score)
+  const labels = scoreHistory.map(s => s.week_label || new Date(s.recorded_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))
+  const startingScore = scores[0] || latestScore
+  const scoreDelta = scores.length >= 2 ? scores[scores.length - 1] - scores[scores.length - 2] : 0
+  const streak = scores.filter((_, i) => i > 0 && scores[i] >= scores[i - 1]).length
+  const cityDisplay = [business.city, business.state].filter(Boolean).join(', ')
+  const isPro = business.subscription_status === 'active'
+
+  const defaultAction = {
+    id: 'default',
+    title: 'Complete your business profile',
+    signal: 'Profile',
+    timeEstimate: '5 minutes',
+    difficulty: 'Easy',
+    previewStep: 'Fill in your trade, city, phone and website in settings.',
+    dueDate: 'TODAY',
+    completed: false,
+  }
+
+  const actionForCard = currentAction ? {
+    id: currentAction.id,
+    title: currentAction.title,
+    signal: currentAction.signal || 'Signal',
+    timeEstimate: currentAction.time_estimate || '10 minutes',
+    difficulty: currentAction.difficulty || 'Easy',
+    previewStep: '',
+    dueDate: currentAction.due_date || 'THIS WEEK',
+    completed: false,
+  } : defaultAction
+
+  const platformCoverage = [
+    { name: 'ChatGPT',          status: latestScore > 40 ? 'indexed' : 'not_indexed' as const,  detail: latestScore > 40 ? 'Visible' : 'Not indexed yet' },
+    { name: 'Perplexity',       status: latestScore > 50 ? 'indexed' : 'partial' as const,       detail: latestScore > 50 ? 'Visible' : 'Partial coverage' },
+    { name: 'Google AI',        status: latestScore > 30 ? 'partial' : 'not_indexed' as const,   detail: 'Needs GBP connection',  fix: '/signals?tab=platforms' },
+    { name: 'Copilot',          status: 'not_indexed' as const,                                   detail: 'Fix available',         fix: '/signals?tab=platforms' },
+    { name: 'Gemini',           status: latestScore > 60 ? 'indexed' : 'partial' as const,       detail: latestScore > 60 ? 'Visible' : 'Partial' },
+    { name: 'Siri',             status: 'partial' as const,                                       detail: 'Needs GBP completeness', fix: '/signals?tab=platforms' },
+  ]
+
   return (
     <div className="flex min-h-screen" style={{ background: 'var(--lacquer-black)' }}>
-      <Sidebar active="dashboard" businessName={d.businessName} trade={d.trade} city={d.city} score={d.score} />
+      <Sidebar
+        active="dashboard"
+        businessName={business.business_name}
+        trade={business.trade || ''}
+        city={cityDisplay}
+        score={latestScore}
+      />
 
       <main className="md:ml-60 flex-1 px-4 md:px-8 py-6 pb-20 md:pb-16 max-w-full md:max-w-[calc(100%-240px)]">
         <AlertBanner />
 
-        {/* TODAY'S ACTION — single priority task */}
+        {/* TODAY'S ACTION */}
         <div className="mb-5 rounded-lg p-5 flex items-center justify-between gap-4" style={{ background: 'var(--raised-lacquer)', borderLeft: '3px solid var(--kinpaku-gold)', border: '1px solid var(--kinpaku-gold)' }}>
           <div className="min-w-0">
-            <p className="text-xs font-medium uppercase tracking-widest mb-1" style={{ color: 'var(--kinpaku-gold)' }}>Today&apos;s action — {d.currentAction.timeEstimate}</p>
-            <p className="text-lg font-bold mb-0.5 truncate" style={{ color: 'var(--champagne)' }}>{d.currentAction.title}</p>
-            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{d.currentAction.difficulty} · +8 pts when done</p>
+            <p className="text-xs font-medium uppercase tracking-widest mb-1" style={{ color: 'var(--kinpaku-gold)' }}>Today&apos;s action — {actionForCard.timeEstimate}</p>
+            <p className="text-lg font-bold mb-0.5 truncate" style={{ color: 'var(--champagne)' }}>{actionForCard.title}</p>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{actionForCard.difficulty} · +8 pts when done</p>
           </div>
           <a href="/driver" style={{ background: 'var(--kinpaku-gold)', color: 'var(--lacquer-black)', padding: '10px 20px', borderRadius: '6px', fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap', textDecoration: 'none', flexShrink: 0 }}>
             Do this now →
           </a>
         </div>
 
-        {/* Which AI can find you */}
+        {/* AI visibility tiles */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
           {[
-            { name: 'ChatGPT',          status: 'red'   as const, label: 'Not visible yet',     sub: 'Uses Foursquare + Yelp' },
-            { name: 'Google AI & Gemini', status: 'amber' as const, label: 'Partially visible', sub: 'Triggers on 97% of local searches' },
-            { name: 'Siri & Apple Maps', status: 'amber' as const, label: 'Partially visible',  sub: 'Uses Apple Maps + Yelp reviews' },
+            { name: 'ChatGPT',           status: latestScore > 40 ? 'green' : 'red'   as const, label: latestScore > 40 ? 'Visible' : 'Not visible yet',   sub: 'Uses Foursquare + Yelp' },
+            { name: 'Google AI & Gemini',status: latestScore > 30 ? 'amber' : 'red'   as const, label: 'Partially visible',                                 sub: 'Triggers on 97% of local searches' },
+            { name: 'Siri & Apple Maps', status: 'amber'                               as const, label: 'Partially visible',                                 sub: 'Uses Apple Maps + Yelp reviews' },
           ].map((tile) => (
             <div key={tile.name} className="rounded-lg p-5" style={{ background: 'var(--raised-lacquer)', border: '1px solid var(--border-subtle)' }}>
               <div className="flex items-center gap-2 mb-1.5">
@@ -91,97 +204,49 @@ export default function DashboardPage() {
 
         {/* Score row */}
         <ScoreRow
-          score={d.score}
-          scoreDelta={d.scoreDelta}
-          estimatedCallsPerMonth={d.estimatedCallsPerMonth}
-          scoreHistory={d.scoreHistory}
-          platformCoverage={d.platformCoverage}
+          score={latestScore}
+          scoreDelta={scoreDelta}
+          estimatedCallsPerMonth={estimatedCalls(latestScore)}
+          scoreHistory={scores}
+          platformCoverage={platformCoverage}
         />
-<AiVisibilityTrend
-  scoreHistory={d.scoreHistory}
-  gbpImpressions={d.gbpImpressions}
-  reviewVelocity={d.reviewVelocity}
-/>
-        {/* This week's action */}
+
+        <AiVisibilityTrend
+          scoreHistory={scores}
+          gbpImpressions={[]}
+          reviewVelocity={[]}
+        />
+
         <div className="mt-5">
-          <WeeklyActionCard action={d.currentAction} nextActionDate="Monday Oct 28" />
+          <WeeklyActionCard action={actionForCard} nextActionDate={actionForCard.dueDate} />
         </div>
 
-        {/* Score over time (merged from Progress) */}
         <ScoreChart
-          scoreHistory={d.scoreHistory}
-          weekLabels={d.weekLabels}
-          score={d.score}
-          startingScore={d.startingScore}
-          streak={d.streak}
-          businessName={d.businessName}
-          city={d.city}
-          estimatedCallsPerMonth={d.estimatedCallsPerMonth}
+          scoreHistory={scores.length > 0 ? scores : [latestScore]}
+          weekLabels={labels.length > 0 ? labels : ['Now']}
+          score={latestScore}
+          startingScore={startingScore}
+          streak={streak}
+          businessName={business.business_name}
+          city={cityDisplay}
+          estimatedCallsPerMonth={estimatedCalls(latestScore)}
         />
 
-        {/* Week by week */}
-        <WeekByWeek
-          scoreHistory={d.scoreHistory}
-          weekLabels={d.weekLabels}
-          weekStatuses={d.weekStatuses}
-        />
+        {scores.length > 1 && (
+          <WeekByWeek
+            scoreHistory={scores}
+            weekLabels={labels}
+            weekStatuses={scores.map((_, i) => i === scores.length - 1 ? 'pending' : 'done') as ('done' | 'missed' | 'pending')[]}
+          />
+        )}
 
-        {/* Score forecast */}
         <div className="mt-10">
-          <div className="text-[11px] font-medium uppercase tracking-[1.5px] mb-3" style={{ color: 'var(--text-dim)' }}>Your Score Forecast</div>
-          <div className="rounded-lg p-6" style={{ background: 'var(--raised-lacquer)', border: '1px solid var(--border-subtle)' }}>
-            <p className="text-sm mb-4" style={{ color: 'var(--text-muted)' }}>At your current pace (completing ~3 of 4 jobs/month):</p>
-            {[
-              { score: 'Score 60', date: 'Dec 2024', rank: 'Top 33% of Denver HVAC on AI' },
-              { score: 'Score 75', date: 'Mar 2025', rank: 'Top 10% of Denver HVAC on AI' },
-              { score: 'Score 90', date: 'Aug 2025', rank: 'Top 3% of Denver HVAC on AI' },
-            ].map((row, i, arr) => (
-              <div key={row.score} className="flex items-baseline gap-4 flex-wrap py-3" style={{ borderBottom: i < arr.length - 1 ? '1px solid var(--border-subtle)' : 'none' }}>
-                <span className="font-barlow font-semibold text-xl w-20 shrink-0" style={{ color: 'var(--kinpaku-gold)' }}>{row.score}</span>
-                <span className="text-[15px] w-20 shrink-0" style={{ color: 'var(--text-muted)' }}>{row.date}</span>
-                <span style={{ color: 'var(--text-dim)' }}>→</span>
-                <span className="text-[15px] font-medium" style={{ color: 'var(--text-warm)' }}>{row.rank}</span>
-              </div>
-            ))}
-            <p className="text-[13px] mt-4" style={{ color: 'var(--score-amber)' }}>Miss 2+ weeks in a row and your forecast shifts out by 6 weeks.</p>
-          </div>
+          <PlatformCoverage platforms={platformCoverage} />
         </div>
 
-        {/* What AI can now find */}
-        <div className="mt-10">
-          <div className="text-[11px] font-medium uppercase tracking-[1.5px] mb-3" style={{ color: 'var(--text-dim)' }}>What AI can now find</div>
-          <div className="flex flex-col gap-3">
-            {[
-              { label: 'Schema markup',  pct: 60, status: 'Partially done', color: 'var(--score-amber)' },
-              { label: 'FAQ content',    pct: 40, status: 'In progress',    color: 'var(--score-amber)' },
-              { label: 'GBP signals',    pct: 100,status: 'Done',           color: 'var(--score-green)' },
-              { label: 'Citations',      pct: 0,  status: 'Not started',    color: 'var(--score-red)' },
-              { label: 'Review signals', pct: 20, status: 'In progress',    color: 'var(--score-amber)' },
-            ].map((sig) => (
-              <div key={sig.label} className="flex items-center gap-3">
-                <span className="text-sm font-semibold w-32 shrink-0" style={{ color: 'var(--champagne)' }}>{sig.label}</span>
-                <div className="flex-1 h-1.5 rounded-full" style={{ background: 'var(--border-subtle)' }}>
-                  <div className="h-full rounded-full" style={{ width: `${sig.pct}%`, background: sig.color }} role="progressbar" aria-valuenow={sig.pct} aria-valuemin={0} aria-valuemax={100} />
-                </div>
-                <span className="text-xs w-24 shrink-0" style={{ color: 'var(--text-muted)' }}>{sig.status}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Platform coverage */}
-        <div className="mt-10">
-          <PlatformCoverage platforms={d.platformCoverage} />
-        </div>
-
-        {/* Attribution panel — Pro only */}
-        <AttributionPanel isPro={d.isPro} estimatedCalls={d.estimatedCallsPerMonth} />
-
-        {/* Quick stats + countdown */}
+        <AttributionPanel isPro={isPro} estimatedCalls={estimatedCalls(latestScore)} />
         <QuickStats />
-
-        {/* Score Watch panel (slide-in) */}
-        <ScoreWatchPanel email={d.email} isPro={d.isPro} />
+        <ScoreWatchPanel email={business.email || ''} isPro={isPro} />
       </main>
     </div>
   )
