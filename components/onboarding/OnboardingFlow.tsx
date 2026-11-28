@@ -117,11 +117,34 @@ export default function OnboardingFlow() {
   async function connectTool(tool: Tool) {
     setConnectLoading(true)
     setConnectError('')
-    await new Promise(r => setTimeout(r, 1200))
-    // In production: OAuth redirect
-    const ok = Math.random() > 0.3
-    if (ok) { setConnectedTool(tool) }
-    else { setConnectError('Connection failed — try again') }
+
+    if (tool === 'Manual' || tool === 'none') {
+      setConnectedTool(tool)
+      setConnectLoading(false)
+      return
+    }
+
+    try {
+      // Get OAuth URL from server for this pipeline
+      const res = await fetch('/api/settings/integrations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'get_oauth_url', pipeline: tool.toLowerCase() })
+      })
+      const json = await res.json() as { oauthUrl?: string; error?: string }
+
+      if (json.oauthUrl) {
+        // Real OAuth redirect — save state so we come back to onboarding
+        localStorage.setItem('geoom_pipeline_connecting', tool)
+        window.location.href = json.oauthUrl
+        return
+      }
+
+      // Pipeline doesn't have OAuth yet — mark as manually connected
+      setConnectedTool(tool)
+    } catch {
+      setConnectError('Could not connect — try again')
+    }
     setConnectLoading(false)
   }
 

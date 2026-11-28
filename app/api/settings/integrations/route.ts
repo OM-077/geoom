@@ -70,10 +70,26 @@ export async function POST(req: NextRequest) {
     if (!business) return NextResponse.json({ error: 'No business found' }, { status: 404 })
 
     const body = await req.json() as {
-      integration: string
+      action?: string
+      pipeline?: string
+      integration?: string
       apiKey?: string
       url?: string
       username?: string
+    }
+
+    // Return OAuth URL for onboarding pipeline connect
+    if (body.action === 'get_oauth_url' && body.pipeline) {
+      if (body.pipeline === 'jobber') {
+        const oauthUrl = getJobberOAuthUrl(business.id)
+        return NextResponse.json({ oauthUrl })
+      }
+      if (body.pipeline === 'gbp' || body.pipeline === 'google') {
+        const oauthUrl = getGBPAuthUrl(business.id)
+        return NextResponse.json({ oauthUrl })
+      }
+      // Other pipelines (Workiz, ServiceM8, HousecallPro) use API keys not OAuth
+      return NextResponse.json({ oauthUrl: null })
     }
 
     const updates: Record<string, string | boolean> = {}
